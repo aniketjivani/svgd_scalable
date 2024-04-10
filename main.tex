@@ -379,7 +379,7 @@
 
     \item SVGD drawbacks (mode collapse?) and projected SVGD \cite{chen_projected_2020}
 
-    \item Ideas from sparse and deep GPs \url{https://gpss.cc/gpss17/slides/gp-approx-new.pdf} and \cite{noack_unifying_2023}
+    \item Ideas from sparse GP + VI \url{https://gpss.cc/gpss17/slides/gp-approx-new.pdf} and \cite{noack_unifying_2023}. Slightly better: start from the simplest case i.e. \cite{snelson_sparse_2005} and then move on to \cite{titsias_variational_2009,titsias_bayesian_2010}
 
     \item Accelerated SVGD? SVI for Deep GPs? \cite{hoffman_stochastic_2013}
 
@@ -388,6 +388,18 @@
 
 \section{Literature}
 We motivate our method by first introducing the concepts of Stein discrepancy, Stein gradient descent, learning kernel operators from Gaussian Processes and the scope for introducing more scalable methods for the same.
+
+\section{Methodology}
+
+Here is the original algorithm for performing SVGD (assume RBF kernel):
+
+
+\noindent Here's our approximation.
+
+
+\noindent Here's the modified algorithm.
+
+\section{Results}
 
 \section{Conclusions}
 
