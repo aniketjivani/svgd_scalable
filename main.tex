@@ -360,6 +360,12 @@
 \newcommand{\alf}{Alfv\'{e}n}
 \newcommand{\Rs}{R$_{\odot}$}
 
+
+\usepackage{algorithmic}
+% \usepackage{algpseudocode}
+
+
+
 \linenumbers
 
 \title{Scalable SVGD for Bayesian Inference}
@@ -371,6 +377,9 @@
 \maketitle
 
 \section{Abstract}
+
+
+
 
 (we will review the use of SVGD for Bayesian Inference, the challenges in scaling it up and if ideas from sparse GPs could be applied to make it more usable with many particles)
 
@@ -391,17 +400,95 @@
 \end{enumerate}
 
 \section{Literature}
-We motivate our method by first introducing the concepts of Stein discrepancy, Stein gradient descent, learning kernel operators from Gaussian Processes and the scope for introducing more scalable methods for the same.
+We motivate our method by first introducing the concepts of Stein discrepancy, Stein gradient descent, learning kernel operators from Gaussian Processes and the scope for introducing more scalable methods for the same. 
+
+GPs are specified by a placing a Gaussian prior on the space of functions $f$ that model the mapping between inputs $X$ and outputs $y$:
+
+$$p(f | X) = \mathcal{N}(0, K_N)$$
+
+Here $K$ is the (parametrized) covariance kernel which expresses some prior notion of smoothness of the underlying function.
+
+The marginal likelihood $p(y | X, \mathcal{D}, \theta)$ is used to train the GP and learn the hyperparameters. The posterior predictive distribution uses standard formulas for update of the mean and covariance of the prior GP, and is generally prohibitive for vanilla GPs because of the $O(N^3)$ cost of the covariance matrix.
+
+\subsection{Sparse GPs}
+
+\citep{snelson_sparse_2005} To fit a sparse GP, we consider a pseudo-dataset $\bar{\mathcal{D}} = \{(\bar{X}, \bar{f})_m\}_{m=1}^{M}$, with $M<N$ Since the targets are not real observations, they are denoted by $\bar{f}$ instead of $\bar{y}$ and set equal to latent function values.
+
+We have to determine the following:
+
+\begin{enumerate}
+    \item Posterior distribution over pseudo-targets $\bar{f}$
+
+    \item Predictive distribution for new $x_{\ast}$
+
+    \item Marginal likelihood expression to find pseudo-input locations!
+\end{enumerate}
+
+\subsection{SVGD Algorithm}
+Most of the math for SVGD comes from \cite{liu_short_2016,liu_kernelized_2016}.
+
+Consider set of initial particles $\{x_i^0\}_{i=1}^n$ and target density $p(x)$. Then for $l$ update steps, the following transports points from initial distribution to target distribution $p(x)$ (or its approximation $q(x)$)
+
+$$x_i^{l+1} \leftarrow x_i^{l} + \epsilon \frac{1}{n}\sum_{i=1}^{n}\left[k(x_j^l, x) \nabla_{x_j^l}(p(x_j^l)) + \nabla_{x_j^l}k(x_j^l, x)\right]$$
+
+% \begin{algorithm}
+% \caption{SVGD from \cite{liu_kernelized_2016}}\label{alg: svgd_vanilla}
+% \begin{algorithmic}
+% \KwData{$p(x)$}
+
+% \For{\texttt{blah}}
+% \STATE $i\gets 10$
+% \IF {$i\geq 5$} 
+%   \STATE $i\gets i-1$
+% \ELSE
+%   \IF {$i\leq 3$}
+%     \STATE $i\gets i+2$
+%   \ENDIF
+% \ENDIF
+
+% \end{algorithmic}
+% \end{algorithm}
+
+\subsection{Projected SVGD}
+\citep{chen_projected_2020} Projected SVGD finds a low-dimensional subspace for projecting $x$ and performs SVGD on a lower dimensional $x$ to avoid the kernel function becoming degenerate for large $d$.
 
 \section{Methodology}
 
-Here is the original algorithm for performing SVGD (assume RBF kernel):
+Let's start by asking the following questions:
+\begin{enumerate}
+    \item What kinds of kernels does SVGD hold for? What alternatives exist to avoid degeneracy?
+
+    \item Is there a meaningful connection between determination of pseudo-inputs for sparse GPs and GD style updates? How do we find pseudo-inputs for the SVGD case? \textcolor{red}{remember that this is most likely a fruitless exercise, these ideas are defined for very different applications: entirely non-parametric methods vs NNs where people look for nice ways to combine optimization over NN parameters (data-fitting) with posterior updates for the weights.}
+
+    \item What are the precise connections between SVGD and flow-based models like CNFs?
+\end{enumerate}
+
+% Here is the original algorithm for performing SVGD (assume RBF kernel):
 
 
-\noindent Here's our approximation.
+% \noindent Here's our approximation.
 
 
-\noindent Here's the modified algorithm.
+% \noindent Here's the modified algorithm.
+
+Let's write down some notes for answering question 3 first:
+
+First we remember that the map is usually constructed to be invertible, starting from the data-generating distribution $x$ and mapping to a standard base distribution (e.g. particles from $q_0$) i.e. the flow direction is reversed. The invertibility ensures we can then draw from the base distribution to sample the posterior distribution.
+
+Let $l$ represent the artificial depth variable or the time variable for integration, and $y_i$ some state variable we wish to update then:
+
+$$y_i^l = y_i^0 + \int_0^{l}g_\theta(y_0, l)dl$$
+
+where $g_\theta$ is the MLP for the flow dynamics.
+
+For CNFs the above can be written as:
+
+$$\log p(x) = \log p(x_0) + \int_l^0 -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
+
+Note that the above is a map for $p(x)$ rather than $x$.
+
+Connecting trace and Stein operator from Liu's paper...
+
 
 \section{Results}
 
