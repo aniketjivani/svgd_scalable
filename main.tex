@@ -450,7 +450,7 @@ $$x_i^{l+1} \leftarrow x_i^{l} + \epsilon \frac{1}{n}\sum_{i=1}^{n}\left[k(x_j^l
 % \end{algorithm}
 
 \subsection{Projected SVGD}
-\citep{chen_projected_2020} Projected SVGD finds a low-dimensional subspace for projecting $x$ and performs SVGD on a lower dimensional $x$ to avoid the kernel function becoming degenerate for large $d$.
+\citep{chen_projected_2020} Projected SVGD finds a low-dimensional subspace for projecting $x$ and performs SVGD on a lower dimensional $x$ to avoid the kernel function becoming degenerate for large $d$. This feels like it solves the major problems of SVGD already, but we are probably coming at it from a different angle i.e. just the steps and approximations of the original algorithm and if there are any generalizations or improvements to be pursued there.
 
 \section{Methodology}
 
@@ -472,7 +472,13 @@ Let's start by asking the following questions:
 
     \item What are the precise connections between SVGD and flow-based models like CNFs? Can we combine neural network weight updates in a flow-based model with posterior computations?
 
-    \textcolor{blue}{The simplest thing we can actually try, funnily enough, is just replacing $p(.)$ by some MLP and / or a richer kernel representation for $k$ - the point being that we can get rid of the variational family and consider a more general case.}
+    \textcolor{blue}{The simplest thing we can actually try, funnily enough, is just replacing $p(.)$ by some MLP and / or a richer kernel representation for $k$ - the points being that}
+    
+    \begin{enumerate}
+        \item we can get rid of the variational family and consider a more general case - if there is a strong case for the quality of posterior learnt by VI
+
+        \item Right now a lot of the methodology here feels like a bunch of tricks to learn the kernel hyperparameters - but surely there is a rigorous way to actually learn these, or a more general and flexible form of Stein that accomodates different choices - again, if there are advantages for a different kernel family (how do we show this?) - the theory and literature on spectral delta kernels makes it clear that there are problems where composing kernels or learning an arbitrary stationary kernel is beneficial. 
+    \end{enumerate}
 
     \item SVGD for Monte-Carlo integration (in combination with level-set methods)
 \end{enumerate}
@@ -499,15 +505,38 @@ For CNFs the above can be written as:
 
 $$\log p(x) = \log p(x_0) + \int_l^0 -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
 
-Note that the above is a map for $p(x)$ rather than $x$.
+The base distribution gets approximated by particles over here as well, so we end up with (for a single step update): \textcolor{red}{Check!!}
 
-(doing what's already been done before and probably isn't very remarkable once I think about it a little more, unless I am very mistaken) Connecting trace and Stein operator from Liu's paper...
+$$x_i^{l+1} = x_i^{l} + \int_{t_{l + 1}}^{t_l} -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
 
-\section{General Literature on Stein}
+and at the final step:
+
+$$x_i^{l} = x_i^{0} + \int_{l}^{0}\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl $$
+
+\textcolor{red}{this notation needs a LOT of fixing!}
+
+(doing what's already been done before and probably isn't very remarkable once I think about it a little more, unless I am very mistaken). Let's take a small step back. Before we introduce the kernel function, the original Stein operator based update, when using a variational family $q(x)$ to approximate $p(x)$ reads as:
+
+$$x_i^{l+1} = x_i^{l} + \mathbb{E}_{x \sim q}\left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right]$$
+
+% or,
+
+% $$x_i^{l+1} = x_i^{l} + \int \left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right] q(x) dx$$
+
+
+\section{General Literature}
+
+\noindent \textbf{Latent Force Models:} Connecting Differential Equations and GP Kernels - see \cite{alvarez09a} for details.
+
+\noindent This assumes latent forcing functions that give rise to the state evolution of the system, and assuming a GP prior on those functions leads to closed form expressions for the output kernel. Then the log-likelihood can be minimized, leading to standard inference based on GP regression.
+
 
 Details of Stein's Operator and Applications: See \cite{anastasiou_steins_2023}
 
+\noindent Derivation of SVGD!
 
+
+\noindent Rewriting the Variational part with a different approximation (\textsc{REINFORCE} vs the reparametrization trick! - see \url{https://stillbreeze.github.io/REINFORCE-vs-Reparameterization-trick/} for details
 
 
 \noindent Details of amortized Stein for training probabilistic NNs: See \cite{feng_learning_2017}
