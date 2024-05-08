@@ -369,21 +369,22 @@
 \linenumbers
 
 \title{Scalable SVGD for Bayesian Inference}
-\author{Aniket and Thomas}
+\author{Aniket}
 \date{\today}
 
 \begin{document}
 
 \maketitle
 
+(many thanks to Thomas Coons for sparking some of the ideas explored in here)
+
 \section{Abstract}
 
-
-
+(main motivation is to have a solid and reliable way of building BNNs - also needed for BOED surrogate training-  we need to understand the theory behind Stein a bit better for that)
 
 (we will review the use of SVGD for Bayesian Inference, the challenges in scaling it up and if ideas from sparse GPs could be applied to make it more usable with many particles)
 
-(another perspective is that of continuous normalizing flows. Can tricks from these e.g. trace estimators help with the computation for many particles?)
+(another perspective is that of continuous normalizing flows. Can tricks from these e.g. trace estimators help with the computation for many particles? also, is there an elegant and simple way to tie together the framework of continuous time NNs and weight updates as a single augmented system?)
 
 \begin{enumerate}
     \item SVGD review \cite{liu_short_2016,liu_kernelized_2016,liu_stein_2019}
