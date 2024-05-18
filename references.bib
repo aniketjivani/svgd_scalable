@@ -1,4 +1,156 @@
 
+@misc{liu_stein_2017,
+	title = {Stein {Variational} {Gradient} {Descent} as {Gradient} {Flow}},
+	url = {http://arxiv.org/abs/1704.07520},
+	doi = {10.48550/arXiv.1704.07520},
+	abstract = {Stein variational gradient descent (SVGD) is a deterministic sampling algorithm that iteratively transports a set of particles to approximate given distributions, based on an efficient gradient-based update that guarantees to optimally decrease the KL divergence within a function space. This paper develops the first theoretical analysis on SVGD, discussing its weak convergence properties and showing that its asymptotic behavior is captured by a gradient flow of the KL divergence functional under a new metric structure induced by Stein operator. We also provide a number of results on Stein operator and Stein's identity using the notion of weak derivative, including a new proof of the distinguishability of Stein discrepancy under weak conditions.},
+	urldate = {2024-05-18},
+	publisher = {arXiv},
+	author = {Liu, Qiang},
+	month = nov,
+	year = {2017},
+	note = {arXiv:1704.07520 [stat]},
+	keywords = {Statistics - Machine Learning},
+}
+
+@misc{fedeli_geometrically-exact_2017,
+	title = {Geometrically-exact time-integration mesh-free schemes for advection-diffusion problems derived from optimal transportation theory and their connection with particle methods},
+	url = {http://arxiv.org/abs/1703.02165},
+	doi = {10.48550/arXiv.1703.02165},
+	abstract = {We develop an Optimal Transportation Meshfree (OTM) particle method for advection-diffusion in which the concentration or density of the diffusive species is approximated by Dirac measures. We resort to an incremental variational principle for purposes of time discretization of the diffusive step. This principle characterizes the evolution of the density as a competition between the Wasserstein distance between two consecutive densities and entropy. Exploiting the structure of the Euler-Lagrange equations, we approximate the density as a collection of Diracs. The interpolation of the incremental transport map is effected through mesh-free max-ent interpolation. Remarkably, the resulting update is geometrically exact with respect to advection and volume. We present three-dimensional examples of application that illustrate the scope and robustness of the method.},
+	urldate = {2024-05-18},
+	publisher = {arXiv},
+	author = {Fedeli, Livio and Pandolfi, Anna and Ortiz, Michael},
+	month = mar,
+	year = {2017},
+	note = {arXiv:1703.02165 [math]},
+	keywords = {Mathematics - Numerical Analysis},
+}
+
+@inproceedings{zhong_benchmarking_2021,
+	title = {Benchmarking {Energy}-{Conserving} {Neural} {Networks} for {Learning} {Dynamics} from {Data}},
+	url = {https://proceedings.mlr.press/v144/zhong21a.html},
+	abstract = {The last few years have witnessed an increased interest in incorporating physics-informed inductive bias in deep learning frameworks. In particular, a growing volume of literature has been exploring ways to enforce energy conservation while using neural networks for learning dynamics from observed time-series data. In this work, we present a comparative analysis of the energy-conserving neural networks - for example, deep Lagrangian network, Hamiltonian neural network, etc. - wherein the underlying physics is encoded in their computation graph. We focus on ten neural network models and explain the similarities and differences between the models. We compare their performance in 4 different physical systems. Our result highlights that using a high-dimensional coordinate system and then imposing restrictions via explicit constraints can lead to higher accuracy in the learned dynamics. We also point out the possibility of leveraging some of these energy-conserving models to design energy-based controllers.},
+	language = {en},
+	urldate = {2024-05-17},
+	booktitle = {Proceedings of the 3rd {Conference} on {Learning} for {Dynamics} and {Control}},
+	publisher = {PMLR},
+	author = {Zhong, Yaofeng Desmond and Dey, Biswadip and Chakraborty, Amit},
+	month = may,
+	year = {2021},
+	pages = {1218--1229},
+}
+
+@article{bhouri_gaussian_2022,
+	title = {Gaussian processes meet {NeuralODEs}: a {Bayesian} framework for learning the dynamics of partially observed systems from scarce and noisy data},
+	volume = {380},
+	shorttitle = {Gaussian processes meet {NeuralODEs}},
+	url = {https://royalsocietypublishing.org/doi/full/10.1098/rsta.2021.0201},
+	doi = {10.1098/rsta.2021.0201},
+	abstract = {We present a machine learning framework (GP-NODE) for Bayesian model discovery from partial, noisy and irregular observations of nonlinear dynamical systems. The proposed method takes advantage of differentiable programming to propagate gradient information through ordinary differential equation solvers and perform Bayesian inference with respect to unknown model parameters using Hamiltonian Monte Carlo sampling and Gaussian Process priors over the observed system states. This allows us to exploit temporal correlations in the observed data, and efficiently infer posterior distributions over plausible models with quantified uncertainty. The use of the Finnish Horseshoe as a sparsity-promoting prior for free model parameters also enables the discovery of parsimonious representations for the latent dynamics. A series of numerical studies is presented to demonstrate the effectiveness of the proposed GP-NODE method including predator–prey systems, systems biology and a 50-dimensional human motion dynamical system.
+
+This article is part of the theme issue ‘Data-driven prediction in dynamical systems’.},
+	number = {2229},
+	urldate = {2024-05-17},
+	journal = {Philosophical Transactions of the Royal Society A: Mathematical, Physical and Engineering Sciences},
+	author = {Bhouri, Mohamed Aziz and Perdikaris, Paris},
+	month = jun,
+	year = {2022},
+	keywords = {dynamical systems, model discovery, scientific machine learning, uncertainty quantification},
+	pages = {20210201},
+}
+
+@misc{dandekar_bayesian_2022,
+	title = {Bayesian {Neural} {Ordinary} {Differential} {Equations}},
+	url = {http://arxiv.org/abs/2012.07244},
+	doi = {10.48550/arXiv.2012.07244},
+	abstract = {Recently, Neural Ordinary Differential Equations has emerged as a powerful framework for modeling physical simulations without explicitly defining the ODEs governing the system, but instead learning them via machine learning. However, the question: "Can Bayesian learning frameworks be integrated with Neural ODE's to robustly quantify the uncertainty in the weights of a Neural ODE?" remains unanswered. In an effort to address this question, we primarily evaluate the following categories of inference methods: (a) The No-U-Turn MCMC sampler (NUTS), (b) Stochastic Gradient Hamiltonian Monte Carlo (SGHMC) and (c) Stochastic Langevin Gradient Descent (SGLD). We demonstrate the successful integration of Neural ODEs with the above Bayesian inference frameworks on classical physical systems, as well as on standard machine learning datasets like MNIST, using GPU acceleration. On the MNIST dataset, we achieve a posterior sample accuracy of 98.5\% on the test ensemble of 10,000 images. Subsequently, for the first time, we demonstrate the successful integration of variational inference with normalizing flows and Neural ODEs, leading to a powerful Bayesian Neural ODE object. Finally, considering a predator-prey model and an epidemiological system, we demonstrate the probabilistic identification of model specification in partially-described dynamical systems using universal ordinary differential equations. Together, this gives a scientific machine learning tool for probabilistic estimation of epistemic uncertainties.},
+	urldate = {2024-05-17},
+	publisher = {arXiv},
+	author = {Dandekar, Raj and Chung, Karen and Dixit, Vaibhav and Tarek, Mohamed and Garcia-Valadez, Aslan and Vemula, Krishna Vishal and Rackauckas, Chris},
+	month = feb,
+	year = {2022},
+	note = {arXiv:2012.07244 [cs]},
+	keywords = {Computer Science - Machine Learning},
+}
+
+@phdthesis{axerio-cilies_predicting_2012,
+	address = {United States -- California},
+	type = {Ph.{D}.},
+	title = {Predicting {Formula} 1 {Tire} {Aerodynamics}: {Sensitivities}, {Uncertainties} and {Optimization}},
+	copyright = {Database copyright ProQuest LLC; ProQuest does not claim copyright in the individual underlying works.},
+	shorttitle = {Predicting {Formula} 1 {Tire} {Aerodynamics}},
+	url = {https://www.proquest.com/docview/2454420037/abstract/30D8EEE5EF06431DPQ/1},
+	abstract = {The efficient design of complex engineering devices requires detailed understanding of the physical processes. These may either negatively or positively affect performance even in the presence of variability in the operating environment or uncertainties in manufacturing. The focus of this work is the prediction of the aerodynamics associated with an isolated, stationary and rotating Formula 1 tire and brake assembly. The end goal is to design a better performing tire assembly in the presence of uncertainties, while reducing as much as possible the computational effort required. This required innovations in computational modeling, uncertainty analysis, and optimization techniques.
+This application is extremely challenging due to the complex fluid dynamics processes such as impingement, jetting, large-scale separation, and wake recovery, inherent in the problem. Previous literature has indicated differing mechanisms explaining the dominant features such as the pressure loading, wake structures and unsteadiness. Limited work has been published on the aerodynamics of realistic tire geometry with specific emphasis on advanced turbulence closures (i.e. large eddy simulation - LES) and optimization under uncertainty; this work provides the first comprehensive reference for this problem. In this work we use large-scale simulations to validate turbulence closures against experimental particle image velocimetry results. We then for the first time quantify the uncertainty associated with Formula 1 tires through sensitivity analysis, and finally optimize the shape of a brake duct under these uncertainties using novel algorithms.
+Part I of this thesis focuses on a deterministic analysis of a realistic tire and brake assembly geometry. The numerical simulations were setup to reproduce a controlled experiment performed at Stanford, in a low-speed close-loop wind tunnel. Multiple turbulence closures are evaluated to determine the closure that most accurately matches experimental results. The results show that LES is more accurate than Reynolds averaged Navier-Stokes (RANS) equations at predicting experimental results. The bluff body flow around an isolated tire in a closed wind tunnel is shown to be inherently unsteady. Time accurate methods (i.e. Unsteady RANS, LES) that capture the unsteadiness of the flow specifically in the near wake, contact patch, and hub regions are more precise at predicting macro-scale structures. A novel RANS wall treatment for moving walls is introduced to correctly represent situations in which the tangential velocity of the wall does not match the freestream velocity; this allows the use of coarser meshes without penalizing dramatically the prediction quality.
+Part II of this thesis focuses on sensitivity, uncertainty quantification and optimization. This is a very important issue in computational engineering, especially in highly competitive environments such as in Formula 1. Current design practice based on a nominal scenario is gradually being replaced with an optimization process that targets realistic race conditions where temperatures, track condition, and 'dirty' air all impact the overall performance of the car. Sensitivities associated with inflow conditions, treatment of rotating components, geometrical tire uncertainties, contact patch assumptions, and turbulence model closure are quantified and ranked in order of importance. In this work, multi-dimensional response surfaces are constructed to relate input variables to output quantities of interest and to compute confidence intervals on the numerical predictions.
+A classic non-dominated sorting based multi-objective evolutionary algorithm is used to optimize the brake cooling duct to achieve the highest air flow mass capture with the least possible tire drag. We continued this analysis by considering the effect of uncertainties in the optimization framework. An extension of the optimization algorithm, the Probabilistic Non-dominated Sorting Genetic Algorithm (P-NSGA) is proposed and tested. The result is a tight coupling between the uncertainty quantification procedure and the optimization procedure giving the most robust brake duct design in the presence of uncertainty.
+With the availability of high-performance computing clusters, the design, optimization, and aerodynamic prediction of extremely complex configurations is becoming increasingly prevalent. In order to efficiently explore the full parameter space for design purposes or to assess the effect of uncertainties, multiple deterministic simulations (or an 'ensemble') need to be performed. In this work, a simulations environment, Leland, has also been developed to schedule, monitor and stir the calculation ensemble and extract runtime information as well as simulations results and statistics on the fly. Leland is a dynamic scheduler that starting from a small ensemble automatically selects the new candidate simulations to be performed to increase the efficiency of both the optimization procedure and the uncertainty quantification method. Leland is equipped with an auto-tuning strategy for optimal load balancing and fault tolerance checks to ensure that a simulation or a processor stall is detected and does not impact the overall ensemble.},
+	language = {English},
+	urldate = {2024-05-10},
+	school = {Stanford University},
+	author = {Axerio-Cilies, John},
+	year = {2012},
+	note = {ISBN: 9798672114958},
+	keywords = {Brake assembly geometry, Fault tolerance, Optimal load balancing},
+}
+
+@article{seshadri_density-matching_2016,
+	title = {A density-matching approach for optimization under uncertainty},
+	volume = {305},
+	issn = {0045-7825},
+	url = {https://www.sciencedirect.com/science/article/pii/S0045782516300883},
+	doi = {10.1016/j.cma.2016.03.006},
+	abstract = {Modern computers enable methods for design optimization that account for uncertainty in the system—so-called optimization under uncertainty (OUU). We propose a metric for OUU that measures the distance between a designer-specified probability density function of the system response (the target) and the system response’s density function at a given design. We study an OUU formulation that minimizes this distance metric over all designs. We discretize the objective function with numerical quadrature, and we approximate the response density function with a Gaussian kernel density estimate. We offer heuristics for addressing issues that arise in this formulation, and we apply the approach to a CFD-based airfoil shape optimization problem. We qualitatively compare the density-matching approach to a multi-objective robust design optimization to gain insight into the method.},
+	urldate = {2024-05-10},
+	journal = {Computer Methods in Applied Mechanics and Engineering},
+	author = {Seshadri, Pranay and Constantine, Paul and Iaccarino, Gianluca and Parks, Geoffrey},
+	month = jun,
+	year = {2016},
+	keywords = {Density-matching, Design under uncertainty, Optimization under uncertainty},
+	pages = {562--578},
+}
+
+@misc{noauthor_horsetail_nodate,
+	title = {Horsetail matching: a flexible approach to optimization under uncertainty*},
+	shorttitle = {Horsetail matching},
+	url = {https://www.tandfonline.com/doi/epdf/10.1080/0305215X.2017.1327581?needAccess=true},
+	language = {en},
+	urldate = {2024-05-10},
+	note = {ISSN: 0305-215X},
+}
+
+@inproceedings{beland_bayesian_nodate,
+	address = {Long Beach, CA, USA},
+	title = {Bayesian {Optimization} {Under} {Uncertainty}},
+	url = {https://bayesopt.github.io/papers/2017/15.pdf},
+	abstract = {We consider the problem of robust optimization, where it is sought to design a
+system such that it sustains a specified measure of performance under uncertainty.
+This problem is challenging since modeling a complex system under uncertainty
+can be expensive and for most real-world problems robust optimization will not
+be computationally viable. In this paper, we propose a Bayesian methodology to
+efficiently solve a class of robust optimization problems that arise in engineering
+design under uncertainty. The central idea is to use Gaussian process models of loss
+functions (or robustness metrics) together with appropriate acquisition functions to
+guide the search for a robust optimal solution. Numerical studies on a test problem
+are presented to demonstrate the efficacy of the proposed approach.},
+	booktitle = {{NeurIPS} {Workshop} on {Bayesian} {Optimization}},
+	author = {Beland, Justin and Nair, Prasanth},
+}
+
+@misc{noauthor_bayesopt_nodate,
+	title = {{BayesOpt} 2017},
+	url = {https://bayesopt.github.io/accepted.html},
+	urldate = {2024-05-10},
+}
+
+@misc{noauthor_bayesopt_nodate-1,
+	title = {{BayesOpt} 2017},
+	url = {https://bayesopt.github.io/accepted.html},
+	urldate = {2024-05-10},
+}
+
 @article{lazaro-gredilla_sparse_2010,
 	title = {Sparse {Spectrum} {Gaussian} {Process} {Regression}},
 	volume = {11},
@@ -240,7 +392,7 @@
 	keywords = {Computer Science - Machine Learning, Mathematics - Dynamical Systems, Physics - Computational Physics, Physics - Data Analysis, Statistics and Probability, Statistics - Machine Learning},
 }
 
-@inproceedings{zhong_benchmarking_2021,
+@inproceedings{zhong_benchmarking_2021-1,
 	title = {Benchmarking {Energy}-{Conserving} {Neural} {Networks} for {Learning} {Dynamics} from {Data}},
 	url = {https://proceedings.mlr.press/v144/zhong21a.html},
 	abstract = {The last few years have witnessed an increased interest in incorporating physics-informed inductive bias in deep learning frameworks. In particular, a growing volume of literature has been exploring ways to enforce energy conservation while using neural networks for learning dynamics from observed time-series data. In this work, we present a comparative analysis of the energy-conserving neural networks - for example, deep Lagrangian network, Hamiltonian neural network, etc. - wherein the underlying physics is encoded in their computation graph. We focus on ten neural network models and explain the similarities and differences between the models. We compare their performance in 4 different physical systems. Our result highlights that using a high-dimensional coordinate system and then imposing restrictions via explicit constraints can lead to higher accuracy in the learned dynamics. We also point out the possibility of leveraging some of these energy-conserving models to design energy-based controllers.},
