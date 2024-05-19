@@ -26,6 +26,7 @@
 \usepackage{epsfig}
 \usepackage[linesnumbered, ruled]{algorithm2e}
 
+\usepackage{ulem}
 \newcommand{\stkout}[1]{\ifmmode\text{\sout{\ensuremath{#1}}}\else\sout{#1}\fi}
 
 \usepackage{multirow}
@@ -368,7 +369,7 @@
 
 \linenumbers
 
-\title{Scalable SVGD for Bayesian Inference}
+\title{SVGD-style continuous NFs for Bayesian Inference}
 \author{Aniket}
 \date{\today}
 
@@ -506,19 +507,31 @@ For CNFs the above can be written as:
 
 $$\log p(x) = \log p(x_0) + \int_l^0 -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
 
-The base distribution gets approximated by particles over here as well, so we end up with (for a single step update): \textcolor{red}{Check!!}
+\stkout{The base distribution gets approximated by particles over here as well, so we end up with (for a single step update):}
 
 $$x_i^{l+1} = x_i^{l} + \int_{t_{l + 1}}^{t_l} -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
+
 
 and at the final step:
 
 $$x_i^{l} = x_i^{0} + \int_{l}^{0}\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl $$
 
-\textcolor{red}{this notation needs a LOT of fixing!}
+\textcolor{red}{okay, so the above is definitely wrong. Its not that the base distribution is approximated by particles, rather CNF solves an augmented system where we find the particle that generates a specific $x$ and solve for the instantaneous change of variables formula that maximizes the log-likelihood of $x$ under that transformation.}
 
-(doing what's already been done before and probably isn't very remarkable once I think about it a little more, unless I am very mistaken). Let's take a small step back. Before we introduce the kernel function, the original Stein operator based update, when using a variational family $q(x)$ to approximate $p(x)$ reads as:
 
-$$x_i^{l+1} = x_i^{l} + \mathbb{E}_{x \sim q}\left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right]$$
+\stkout{(doing what's already been done before and probably isn't very remarkable once I think about it a little more, unless I am very mistaken). Let's take a small step back. Before we introduce the kernel function, the original Stein operator based update, when using a variational family $q(x)$ to approximate $p(x)$ reads as:}
+
+% $$x_i^{l+1} = x_i^{l} + \mathbb{E}_{x \sim q}\left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right]$$
+
+\begin{equation*}
+    x_i^{l+1} = x_i^{l} + \epsilon \mathbf{\phi}_{\hat{\mu}_l^n, p}^{\ast}(x_l^i)
+\end{equation*}
+
+the problematic part of the Stein approximation is that of the non-linear velocity field $\phi$ which should maximally decrease KL divergence w.r.t. target distribution. 
+
+Another way to write it is through the operation of a fixed point non-linear map on empirical measure $\hat{\mu}$:
+
+$$\hat{\mu}_{l + 1}^n = \Phi_p (\hat{\mu}_l^n)$$
 
 % or,
 
@@ -544,9 +557,45 @@ Details of Stein's Operator and Applications: See \cite{anastasiou_steins_2023}
 \noindent Details of amortized Stein for training probabilistic NNs: See \cite{feng_learning_2017}
 
 
-\noindent \textbf{Particle transport methods} \emph{``Particles may be regarded as Dirac-delta approximations of otherwise continuous measures or densities. However, continuum transport problems differ from true particle-dynamics problems in one important respect $\cdots$ The velocity field that governs the instantaneous motion of the particles depends on local density gradients, not just particle positions.''} - from paper on OT methods for advection-diffusion \cite{fedeli_geometrically-exact_2017}.
+\noindent \textbf{Particle transport methods} \emph{``Particles may be regarded as Dirac-delta approximations of otherwise continuous measures or densities. However, continuum transport problems differ from true particle-dynamics problems in one important respect $\cdots$ The velocity field that governs the instantaneous motion of the particles depends on local density gradients, not just particle positions.''} - from paper on OT methods for advection-diffusion \cite{fedeli_geometrically-exact_2017}. An example of advection using particle based methods can be found here: \href{https://docs.oceanparcels.org/en/latest/examples/tutorial_analyticaladvection.html}{Lagrangian simulators!} and some more thoughts on this over here: \url{https://math.temple.edu/~seibold/research/meshfree/}
 
-\noindent \textbf{SVGD as Gradient Flow} \emph{Empirical measures of SVGD samples weakly converge to the target distribution, $\cdots$ asymptotic behaviour $\cdots$ characterized by a nonlinear Fokker-Planck equation known as Vlasov equation in physics.} \cite{liu_stein_2017}
+\noindent \textbf{SVGD as Gradient Flow} Stein is a particle-based approximation to an evolutionary PDE of densities or measures...\emph{Empirical measures of SVGD samples weakly converge to the target distribution, $\cdots$ asymptotic behaviour $\cdots$ characterized by a nonlinear Fokker-Planck equation known as Vlasov equation in physics.} \cite{liu_stein_2017}
+
+Our understanding here is still incomplete, mainly w.r.t the following few points:
+
+\begin{enumerate}
+    \item Derivation of the gradient flow equation - I am completely lost in the steps there - some trace trick?
+
+    \item Derivation of the gradient step of KL in terms of the kernel and the Fisher score
+
+    \item Minimization of other Stein discrepancies (non-kernelized) (see \cite{anastasiou_steins_2023} for overview)
+
+    \item Theorem 3.3 from \cite{liu_stein_2017}
+
+    \item Fixed point iteration perspective vs differential equation perspective (one is for particles while the other is for densities??)
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/stein_overview.jpg}
+    \caption{My rudimentary understanding of the ideas involved in Stein}
+    \label{fig:stein-big-picture}
+\end{figure}
+
+Based on the above, however, we can draw up a very rough action plan!
+
+\begin{enumerate}
+    \item How many particles are too many? i.e. when does the kernel approximation really break down? Probably need to stress test on some tougher canonical example for this.
+
+    \item Start with the augmented CNF \cite{grathwohl_ffjord_2018}:
+    $$\underbrace{\begin{bmatrix}\mathbf{z}_0\\\log p(\mathbf{x})-\log p_{z_0}(\mathbf{z}_0)\end{bmatrix}}_{\text{solutions}}=\underbrace{\int_{t_1}^{t_0}\begin{bmatrix}f(\mathbf{z}(t),t;\theta)\\-\operatorname{Tr}\left(\frac{\partial f}{\partial\mathbf{z}(t)}\right)\end{bmatrix}dt}_{\text{dynamics}},\quad\underbrace{\begin{bmatrix}\mathbf{z}(t_1)\\\log p(\mathbf{x})-\log p(\mathbf{z}(t_1))\end{bmatrix}=\begin{bmatrix}\mathbf{x}\\0\end{bmatrix}}_{\text{initial values}}$$
+
+    and replace $f$ by the Stein update (so we need to find the expression with the kernel, and also get its trace!) - if we are not doing something silly here.
+
+    Then we can run a few comparisons right off the bat with CNFs: Number of function evaluations needed in forward and backward pass, plots of learnt dynamics (are they regularized out of the box?!) and also try experiments with a bunch of kernels.
+
+    \item More theoretical stuff, quality of posterior compared to other methods, more (faraway) thoughts on kernel approximations.
+\end{enumerate}
 
 \section{Results}
 
