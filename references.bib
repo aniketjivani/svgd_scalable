@@ -1,4 +1,162 @@
 
+@phdthesis{hauth_advances_2024,
+	type = {Thesis},
+	title = {Advances in {Intuitive} {Priors} and {Scalable} {Algorithms} for {Bayesian} {Deep} {Neural} {Network} {Models} in {Scientific} {Applications}},
+	url = {http://deepblue.lib.umich.edu/handle/2027.42/193183},
+	abstract = {In recent years, deep learning (DL) algorithms have gained widespread use in scientific and engineering fields, promising insights into complex trends within extensive datasets. However, these models typically lack transparency and interpretability and the quantification of uncertainty in DL models, especially related to the understanding derived from the quality and quantity of training data, remains an underexplored research area. This dissertation addresses this gap by advancing Bayesian uncertainty quantification (UQ) methods in large-scale deep neural networks (DNNs), specifically constructing Bayesian neural networks (BNNs). 
+
+This dissertation proposes two methodological improvements to BNNs: the first is a parameter subselection procedure that leverages gradient based sensitivity analysis to select only the most impactful DL parameters for Bayesian inference; the second contribution is a prior selection methodology that weighs both expert knowledge of the predictive space alongside as well as desirable regularizing effects in the weight space. 
+
+This dissertation goes on to implement Bayesian neural networks and these novel methodologies in four unique scientific machine learning case studies, two related to physics simulations and two related to real-world health data. These case studies include: a novel framework for remotely detecting ice accumulation on helicopter rotor blades and assessing flight performance degradation; an investigation on the temporal evolution of uncertainty in Bayesian graph convolutional neural networks when predicting stress response in polycrystalline materials; an investigation of the uncertainty in the state-of-the-art U-NET model for brain tumor segmentation; and a novel framework for automatically assessing physical therapy patient performance on balance training exercises, along with preliminary approaches for future exercise recommendation. 
+
+By drawing new insights into model uncertainty across diverse science and engineering applications, this research aims to provide greater understanding of uncertainty in Bayesian neural networks, to help mitigate the consequences of model overconfidence, and to provide critical metrics for decision-making and data collection.},
+	language = {en\_US},
+	urldate = {2024-05-29},
+	author = {Hauth, Jeremiah},
+	year = {2024},
+	doi = {10.7302/22828},
+}
+
+@incollection{tracey_upgrading_2018,
+	series = {{AIAA} {SciTech} {Forum}},
+	title = {Upgrading from {Gaussian} {Processes} to {Student}’s-{T} {Processes}},
+	url = {https://arc.aiaa.org/doi/10.2514/6.2018-1659},
+	urldate = {2024-05-24},
+	booktitle = {2018 {AIAA} {Non}-{Deterministic} {Approaches} {Conference}},
+	publisher = {American Institute of Aeronautics and Astronautics},
+	author = {Tracey, Brendan D. and Wolpert, David},
+	month = jan,
+	year = {2018},
+	doi = {10.2514/6.2018-1659},
+	keywords = {Aerodynamic Force, Aerospace Designs, Angle of Attack, Bayesian Optimization, Computational Fluid Dynamics, Computing, Cumulative Distribution Function, Nelder Mead Simplex, Optimization Algorithm, Wing Twist},
+}
+
+@misc{amini_deep_2019,
+	title = {Deep {Evidential} {Regression}},
+	url = {https://arxiv.org/abs/1910.02600v2},
+	abstract = {Deterministic neural networks (NNs) are increasingly being deployed in safety critical domains, where calibrated, robust, and efficient measures of uncertainty are crucial. In this paper, we propose a novel method for training non-Bayesian NNs to estimate a continuous target as well as its associated evidence in order to learn both aleatoric and epistemic uncertainty. We accomplish this by placing evidential priors over the original Gaussian likelihood function and training the NN to infer the hyperparameters of the evidential distribution. We additionally impose priors during training such that the model is regularized when its predicted evidence is not aligned with the correct output. Our method does not rely on sampling during inference or on out-of-distribution (OOD) examples for training, thus enabling efficient and scalable uncertainty learning. We demonstrate learning well-calibrated measures of uncertainty on various benchmarks, scaling to complex computer vision tasks, as well as robustness to adversarial and OOD test samples.},
+	language = {en},
+	urldate = {2024-05-24},
+	journal = {arXiv.org},
+	author = {Amini, Alexander and Schwarting, Wilko and Soleimany, Ava and Rus, Daniela},
+	month = oct,
+	year = {2019},
+}
+
+@techreport{sentz_combination_2002,
+	title = {Combination of {Evidence} in {Dempster}-{Shafer} {Theory}},
+	url = {https://www.osti.gov/biblio/800792},
+	abstract = {Dempster-Shafer theory offers an alternative to traditional probabilistic theory for the mathematical representation of uncertainty. The significant innovation of this framework is that it allows for the allocation of a probability mass to sets or intervals. Dempster-Shafer theory does not require an assumption regarding the probability of the individual constituents of the set or interval. This is a potentially valuable tool for the evaluation of risk and reliability in engineering applications when it is not possible to obtain a precise measurement from experiments, or when knowledge is obtained from expert elicitation. An important aspect of this theory is the combination of evidence obtained from multiple sources and the modeling of conflict between them. This report surveys a number of possible combination rules for Dempster-Shafer structures and provides examples of the implementation of these rules for discrete and interval-valued data.},
+	language = {English},
+	number = {SAND2002-0835},
+	urldate = {2024-05-24},
+	institution = {Sandia National Lab. (SNL-NM), Albuquerque, NM (United States); Sandia National Lab. (SNL-CA), Livermore, CA (United States)},
+	author = {Sentz, Kari and Ferson, Scott},
+	month = apr,
+	year = {2002},
+	doi = {10.2172/800792},
+}
+
+@article{zhuang_learned_2021,
+	title = {Learned discretizations for passive scalar advection in a two-dimensional turbulent flow},
+	volume = {6},
+	url = {https://link.aps.org/doi/10.1103/PhysRevFluids.6.064605},
+	doi = {10.1103/PhysRevFluids.6.064605},
+	abstract = {The computational cost of fluid simulations increases rapidly with grid resolution. This has given a hard limit on the ability of simulations to accurately resolve small-scale features of complex flows. Here we use a machine learning approach to learn a numerical discretization that retains high accuracy even when the solution is under-resolved with classical methods. We apply this approach to passive scalar advection in a two-dimensional turbulent flow. The method maintains the same accuracy as traditional high-order flux-limited advection solvers, while using 4× lower grid resolution in each dimension. The machine learning component is tightly integrated with traditional finite-volume schemes and can be trained via an end-to-end differentiable programming framework. The solver can achieve near-peak hardware utilization on CPUs and accelerators via convolutional filters.},
+	number = {6},
+	urldate = {2024-05-21},
+	journal = {Physical Review Fluids},
+	author = {Zhuang, Jiawei and Kochkov, Dmitrii and Bar-Sinai, Yohai and Brenner, Michael P. and Hoyer, Stephan},
+	month = jun,
+	year = {2021},
+	pages = {064605},
+}
+
+@misc{noauthor_probabilistic_2024,
+	title = {Probabilistic {Machine} {Learning} {Methods} for {Spatio}-{Temporal} {Data}},
+	url = {https://curate.nd.edu/articles/dataset/Probabilistic_Machine_Learning_Methods_for_Spatio-Temporal_Data/25595235/1},
+	doi = {10.7274/25595235.v1},
+	abstract = {This dissertation presents multiple novel methodological advancements in the realm of machine learning (ML) for spatio-temporal data applications. Traditional machine learning approaches typically have difficultly producing both accurate point predictions and adequate uncertainty quantification for these data, especially in instances where the data themselves are sampled at a fine temporal scale. This is due to the fact that inference on these complex ML models is notably difficult and can impose a significant computational burden. The challenge of forecasting spatio-temporal data is further heightened when attempting to ensure the forecast themselves obey any known physical laws which dictate or influence the underlying data structure.
+
+We explore the current challenges in properly quantifying the uncertainty of forecasts for spatio-temporal data applications stemming from contemporary ML models. Methods are introduced to not only calibrate the uncertainty estimates such that proper coverage is achieved but also so there is a realistic expansion of the uncertainty through time. These contemporary ML models are also adapted such that the physical processes present throughout that data are used to inform the learning procedures, so that the forecasts themselves are influenced to be more physically compliant. We demonstrate the power in combining ML models in an ensemble to improve model accuracy in predicting nonstationary, complex temporal data. Finally, a general comparison is made to explore the benefits and drawbacks of ML approaches to time-series forecasting versus the popular and standard statistical approaches, and as a guide to explain how these newfound advanced ML modelling techniques are not necessarily meant to act as a universal best approach for prediction and forecasting.},
+	language = {en},
+	urldate = {2024-05-21},
+	publisher = {University of Notre Dame},
+	month = may,
+	year = {2024},
+}
+
+@misc{romero_towards_2022,
+	title = {Towards a {General} {Purpose} {CNN} for {Long} {Range} {Dependencies} in \${N}\${D}},
+	url = {http://arxiv.org/abs/2206.03398},
+	doi = {10.48550/arXiv.2206.03398},
+	abstract = {The use of Convolutional Neural Networks (CNNs) is widespread in Deep Learning due to a range of desirable model properties which result in an efficient and effective machine learning framework. However, performant CNN architectures must be tailored to specific tasks in order to incorporate considerations such as the input length, resolution, and dimentionality. In this work, we overcome the need for problem-specific CNN architectures with our Continuous Convolutional Neural Network (CCNN): a single CNN architecture equipped with continuous convolutional kernels that can be used for tasks on data of arbitrary resolution, dimensionality and length without structural changes. Continuous convolutional kernels model long range dependencies at every layer, and remove the need for downsampling layers and task-dependent depths needed in current CNN architectures. We show the generality of our approach by applying the same CCNN to a wide set of tasks on sequential (1\${\textbackslash}mathrm\{D\}\$) and visual data (2\${\textbackslash}mathrm\{D\}\$). Our CCNN performs competitively and often outperforms the current state-of-the-art across all tasks considered.},
+	urldate = {2024-05-21},
+	publisher = {arXiv},
+	author = {Romero, David W. and Knigge, David M. and Gu, Albert and Bekkers, Erik J. and Gavves, Efstratios and Tomczak, Jakub M. and Hoogendoorn, Mark},
+	month = jul,
+	year = {2022},
+	note = {arXiv:2206.03398 [cs]},
+	keywords = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
+}
+
+@article{giordano_black_2024,
+	title = {Black {Box} {Variational} {Inference} with a {Deterministic} {Objective}: {Faster}, {More} {Accurate}, and {Even} {More} {Black} {Box}},
+	volume = {25},
+	issn = {1533-7928},
+	shorttitle = {Black {Box} {Variational} {Inference} with a {Deterministic} {Objective}},
+	url = {http://jmlr.org/papers/v25/23-1015.html},
+	abstract = {Automatic differentiation variational inference (ADVI) offers fast and easy-to-use posterior approximation in multiple modern probabilistic programming languages. However, its stochastic optimizer lacks clear convergence criteria and requires tuning parameters. Moreover, ADVI inherits the poor posterior uncertainty estimates of mean-field variational Bayes (MFVB). We introduce "deterministic ADVI" (DADVI) to address these issues. DADVI replaces the intractable MFVB objective with a fixed Monte Carlo approximation, a technique known in the stochastic optimization literature as the "sample average approximation" (SAA). By optimizing an approximate but deterministic objective, DADVI can use off-the-shelf second-order optimization, and, unlike standard mean-field ADVI, is amenable to more accurate posterior covariances via linear response (LR). In contrast to existing worst-case theory, we show that, on certain classes of common statistical problems, DADVI and the SAA can perform well with relatively few samples even in very high dimensions, though we also show that such favorable results cannot extend to variational approximations that are too expressive relative to mean-field ADVI. We show on a variety of real-world problems that DADVI reliably finds good solutions with default settings (unlike ADVI) and, together with LR covariances, is typically faster and more accurate than standard ADVI.},
+	number = {18},
+	urldate = {2024-05-21},
+	journal = {Journal of Machine Learning Research},
+	author = {Giordano, Ryan and Ingram, Martin and Broderick, Tamara},
+	year = {2024},
+	pages = {1--39},
+}
+
+@article{fries_lasdi_2022,
+	title = {{LaSDI}: {Parametric} {Latent} {Space} {Dynamics} {Identification}},
+	volume = {399},
+	issn = {00457825},
+	shorttitle = {{LaSDI}},
+	url = {http://arxiv.org/abs/2203.02076},
+	doi = {10.1016/j.cma.2022.115436},
+	abstract = {Enabling fast and accurate physical simulations with data has become an important area of computational physics to aid in inverse problems, design-optimization, uncertainty quantification, and other various decision-making applications. This paper presents a data-driven framework for parametric latent space dynamics identification procedure that enables fast and accurate simulations. The parametric model is achieved by building a set of local latent space model and designing an interaction among them. An individual local latent space dynamics model achieves accurate solution in a trust region. By letting the set of trust region to cover the whole parameter space, our model shows an increase in accuracy with an increase in training data. We introduce two different types of interaction mechanisms, i.e., point-wise and region-based approach. Both linear and nonlinear data compression techniques are used. We illustrate the framework of Latent Space Dynamics Identification (LaSDI) enable a fast and accurate solution process on various partial differential equations, i.e., Burgers' equations, radial advection problem, and nonlinear heat conduction problem, achieving \$O(100)\$x speed-up and \$O(1){\textbackslash}\%\$ relative error with respect to the corresponding full order models.},
+	urldate = {2024-05-20},
+	journal = {Computer Methods in Applied Mechanics and Engineering},
+	author = {Fries, William and He, Xiaolong and Choi, Youngsoo},
+	month = sep,
+	year = {2022},
+	note = {arXiv:2203.02076 [cs, math]},
+	keywords = {Mathematics - Numerical Analysis},
+	pages = {115436},
+}
+
+@misc{noauthor_intense_nodate,
+	title = {Intense space weather storms {October} 19-{November} 07, 2003},
+	url = {https://repository.library.noaa.gov/view/noaa/6995},
+	urldate = {2024-05-20},
+}
+
+@misc{noauthor_intense_nodate-1,
+	title = {Intense space weather storms {October} 19-{November} 07, 2003},
+	url = {https://repository.library.noaa.gov/view/noaa/6995},
+	urldate = {2024-05-20},
+}
+
+@inproceedings{finzi_simplifying_2020,
+	title = {Simplifying {Hamiltonian} and {Lagrangian} {Neural} {Networks} via {Explicit} {Constraints}},
+	volume = {33},
+	url = {https://papers.nips.cc/paper/2020/hash/9f655cc8884fda7ad6d8a6fb15cc001e-Abstract.html},
+	urldate = {2024-05-20},
+	booktitle = {Advances in {Neural} {Information} {Processing} {Systems}},
+	publisher = {Curran Associates, Inc.},
+	author = {Finzi, Marc and Wang, Ke Alexander and Wilson, Andrew G},
+	year = {2020},
+	pages = {13880--13889},
+}
+
 @misc{grathwohl_ffjord_2018,
 	title = {{FFJORD}: {Free}-form {Continuous} {Dynamics} for {Scalable} {Reversible} {Generative} {Models}},
 	shorttitle = {{FFJORD}},
@@ -393,7 +551,7 @@ are presented to demonstrate the efficacy of the proposed approach.},
 	keywords = {Statistics - Methodology},
 }
 
-@misc{finzi_simplifying_2020,
+@misc{finzi_simplifying_2020-1,
 	title = {Simplifying {Hamiltonian} and {Lagrangian} {Neural} {Networks} via {Explicit} {Constraints}},
 	url = {http://arxiv.org/abs/2010.13581},
 	doi = {10.48550/arXiv.2010.13581},
@@ -1403,7 +1561,7 @@ useful reference for the current state of the art.},
 	pages = {e2023SW003487},
 }
 
-@article{reinhart_review_2018-1,
+@article{reinhart_review_2018,
 	title = {A {Review} of {Self}-{Exciting} {Spatio}-{Temporal} {Point} {Processes} and {Their} {Applications}},
 	volume = {33},
 	issn = {0883-4237},
