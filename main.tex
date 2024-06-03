@@ -594,10 +594,19 @@ Based on the above, however, we can draw up a very rough action plan!
 
     Then we can run a few comparisons right off the bat with CNFs: Number of function evaluations needed in forward and backward pass, plots of learnt dynamics (are they regularized out of the box?!) and also try experiments with a bunch of kernels.
 
-    To be clear, we also need to investigate some claims in greater detail, notably performance improvements of CNFs over NFs, what freedom it allows in terms of choice of $f$ and trying to find more robust links between the OT-based regularization and any `implicit' regularization in Stein's method. The motivation is also not completely clear, and we should clarify how it fits into the broader aims of the thesis too.
+    To be clear, we also need to investigate some claims in greater detail, notably performance improvements of CNFs over NFs, 
+    % what freedom it allows in terms of choice of $f$ and trying to find more robust links between the OT-based regularization and any `implicit' regularization in Stein's method. The motivation is also not completely clear, and we should clarify how it fits into the broader aims of the thesis too.
+
+    \textcolor{red}{One key advantage may be that once the change of variables formula has been simplified to use the trace, unbiased estimators of the trace can be deployed, resulting in a free-form Jacobian.}
+
+    \textcolor{red}{What then about the form of $f$?} One idea is that $f = \grad_x \log p(x) \phi(x)^T + \grad_x \phi(x)$ where $\phi$ can now be replaced by any suitable choice of kernel.
+
+    
 
     \item More theoretical stuff, quality of posterior compared to other methods, more (faraway) thoughts on kernel approximations.
 \end{enumerate}
+
+
 
 \section{Results}
 
