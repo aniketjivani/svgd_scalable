@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage{graphicx} % Required for inserting images
-
+\usepackage[utf8]{inputenc}
 
 \usepackage{hyperref}
 \usepackage{xcolor}
@@ -454,6 +454,9 @@ $$x_i^{l+1} \leftarrow x_i^{l} + \epsilon \frac{1}{n}\sum_{i=1}^{n}\left[k(x_j^l
 \subsection{Projected SVGD}
 \citep{chen_projected_2020} Projected SVGD finds a low-dimensional subspace for projecting $x$ and performs SVGD on a lower dimensional $x$ to avoid the kernel function becoming degenerate for large $d$. This feels like it solves the major problems of SVGD already, but we are probably coming at it from a different angle i.e. just the steps and approximations of the original algorithm and if there are any generalizations or improvements to be pursued there.
 
+\subsection{Normalizing Flows}
+Understanding CNFs also requires that we obtain a detailed understanding of how normalizing flows are proposed and solved, as well as the divergence loss depending on the target application. \cite{papamakarios_normalizing_2021}
+
 \section{Methodology}
 
 Let's start by asking the following questions:
@@ -484,6 +487,8 @@ Let's start by asking the following questions:
 
     \item SVGD for Monte-Carlo integration (in combination with level-set methods)
 \end{enumerate}
+
+
 
 % Here is the original algorithm for performing SVGD (assume RBF kernel):
 
@@ -538,6 +543,28 @@ $$\hat{\mu}_{l + 1}^n = \Phi_p (\hat{\mu}_l^n)$$
 % $$x_i^{l+1} = x_i^{l} + \int \left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right] q(x) dx$$
 
 
+\subsection{Metrics for normalizing flows}
+
+(from \cite{papamakarios_normalizing_2021}):
+Options for comparing distributions are grouped into two general families (density ratios vs differences):
+
+\begin{enumerate}
+    \item $f$-divergence:
+
+    $$D_f\left[p_\mathrm{x}^*(\mathbf{x})\parallel p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})\right]=\mathbb{E}_{p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})}\left[f\left(\frac{p_\mathrm{x}^*(\mathbf{x})}{p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})}\right)\right]$$
+
+    \item Integral Probability Metrics (IPMs) (\textcolor{red}{Stein uses maximum mean discrepancy?})
+
+    $$\delta_s\left[p_\mathrm{x}^*(\mathbf{x})\left\|p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})\right.\right]=\mathbb{E}_{p_\mathrm{x}^*(\mathbf{x})}\left[\left.s(\mathbf{x})\right.\right]-\mathbb{E}_{p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})}\left[\left.s(\mathbf{x})\right.\right]$$
+\end{enumerate}
+
+(using example of divergence) - we have to choose between forward and reverse KL. The forward KL is well suited for when we have samples from the target distribution (or we can generate them) but we cannot necessarily evaluate the target density. Minimizing the MC approximation of the KL divergence here is equivalent to fitting the flow-based model by MLE.
+
+The reverse KL is often used for variational inference - we can fit a flow based model even if we cannot evaluate the base density or compute inverse transformation - it is useful when samples cannot be drawn efficiently from the target model, so the flow model essentially replaces the target model as a fast surrogate.
+
+\subsection{Continuous normalizing flows for BI}
+
+
 \section{General Literature}
 
 \noindent \textbf{Latent Force Models:} Connecting Differential Equations and GP Kernels - see \cite{alvarez09a} for details.
@@ -555,6 +582,22 @@ Details of Stein's Operator and Applications: See \cite{anastasiou_steins_2023}
 
 
 \noindent Details of amortized Stein for training probabilistic NNs: See \cite{feng_learning_2017}
+
+
+\noindent \textcolor{red}{\textbf{Stein operators for other divergences:}} This basically means that we come up with a viable form of the Stein operator s.t. the maximization of the Stein discrepancy can be linked with other divergence formulas. See \cite{zozor_debruijn_2015} and functional gradients for ways to evaluate arbitrary divergences. \textcolor{red}{This would give rise to a generalized version of SVGD.} 
+
+
+\textcolor{red}{Other divergences?}: Also see - \cite{kumar_kattumannil_steins_2009} for generalization of Stein's identity to exponential families. Finally, if there is a reason to favour Wasserstein distance over regular KL, \cite{huggins_practical_2018} bounds Wasserstein distance via the $(p, \nu)-$Fisher distance:
+
+$$d_{p, \nu} (\eta, \hat{\eta}) = \| \| \nabla U - \nabla \hat{U}\|_2\|_{L^p(\nu)} = \left\{\int \| \nabla U(\theta) - \nabla \hat{U}(\theta) \|_2^p \nu(d\theta)\right\}^{1/p}$$ where $U = -\log d\hat{\eta}/d\theta$.
+
+A more simplified notation for the above (called in other places as the \emph{Fisher divergence} or the \emph{Fisher information distance} is given as \citep{sriperumbudur_density_2017}:
+
+$$J(p || q) = \frac{1}{2} \int_{\Omega} p(x) ||\nabla \log p(x) - \nabla \log q(x)||_2^2 dx$$
+
+Funnily, Fisher is closely related to KL through the de Bruijn's identity (see the above reference for more details), and ostensibly its a stronger form of convergence than in KL.
+
+
 
 
 \noindent \textbf{Particle transport methods} \emph{``Particles may be regarded as Dirac-delta approximations of otherwise continuous measures or densities. However, continuum transport problems differ from true particle-dynamics problems in one important respect $\cdots$ The velocity field that governs the instantaneous motion of the particles depends on local density gradients, not just particle positions.''} - from paper on OT methods for advection-diffusion \cite{fedeli_geometrically-exact_2017}. An example of advection using particle based methods can be found here: \href{https://docs.oceanparcels.org/en/latest/examples/tutorial_analyticaladvection.html}{Lagrangian simulators!} and some more thoughts on this over here: \url{https://math.temple.edu/~seibold/research/meshfree/}
@@ -599,9 +642,7 @@ Based on the above, however, we can draw up a very rough action plan!
 
     \textcolor{red}{One key advantage may be that once the change of variables formula has been simplified to use the trace, unbiased estimators of the trace can be deployed, resulting in a free-form Jacobian.}
 
-    \textcolor{red}{What then about the form of $f$?} One idea is that $f = \grad_x \log p(x) \phi(x)^T + \grad_x \phi(x)$ where $\phi$ can now be replaced by any suitable choice of kernel.
-
-    
+    \textcolor{red}{What then about the form of $f$?} One idea is that $f = \grad_x \log p(x) \phi(x)^T + \grad_x \phi(x)$ where $\phi$ can now be replaced by any suitable choice of kernel. I wonder if this becomes a two-step update in that case, where we first solve for $z$ with some initialized / older value for $p(x)$ and then update the logpdf of the same in the second step (this suddenly looks suspiciously like symplectic integration).
 
     \item More theoretical stuff, quality of posterior compared to other methods, more (faraway) thoughts on kernel approximations.
 \end{enumerate}
