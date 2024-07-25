@@ -587,7 +587,7 @@ Details of Stein's Operator and Applications: See \cite{anastasiou_steins_2023}
 \noindent \textcolor{red}{\textbf{Stein operators for other divergences:}} This basically means that we come up with a viable form of the Stein operator s.t. the maximization of the Stein discrepancy can be linked with other divergence formulas. See \cite{zozor_debruijn_2015} and functional gradients for ways to evaluate arbitrary divergences. \textcolor{red}{This would give rise to a generalized version of SVGD.} 
 
 
-\textcolor{red}{Other divergences?}: Also see - \cite{kumar_kattumannil_steins_2009} for generalization of Stein's identity to exponential families. Finally, if there is a reason to favour Wasserstein distance over regular KL, \cite{huggins_practical_2018} bounds Wasserstein distance via the $(p, \nu)-$Fisher distance:
+\noindent \textcolor{red}{Other divergences?}: Also see - \cite{kattumannil_steins_2009} for generalization of Stein's identity to exponential families. Finally, if there is a reason to favour Wasserstein distance over regular KL, \cite{huggins_practical_2018} bounds Wasserstein distance via the $(p, \nu)-$Fisher distance:
 
 $$d_{p, \nu} (\eta, \hat{\eta}) = \| \| \nabla U - \nabla \hat{U}\|_2\|_{L^p(\nu)} = \left\{\int \| \nabla U(\theta) - \nabla \hat{U}(\theta) \|_2^p \nu(d\theta)\right\}^{1/p}$$ where $U = -\log d\hat{\eta}/d\theta$.
 
@@ -595,9 +595,9 @@ A more simplified notation for the above (called in other places as the \emph{Fi
 
 $$J(p || q) = \frac{1}{2} \int_{\Omega} p(x) ||\nabla \log p(x) - \nabla \log q(x)||_2^2 dx$$
 
-Funnily, Fisher is closely related to KL through the de Bruijn's identity (see the above reference for more details), and ostensibly its a stronger form of convergence than in KL.
+Funnily, Fisher is closely related to KL through the de Bruijn's identity (see the above reference for more details), and ostensibly its a stronger form of convergence than in KL (total variation distance?) (also see \url{https://math.stackexchange.com/a/4711339})
 
-
+A final interesting point is using variational approximations for Fisher divergence instead of KL - see \cite{yang_variational_2019} for a proposed method that does away with mean-field assumptions (we are not picky about using KL for Bayesian inference unlike for OED because the latter has theoretical constraints for what counts as a measure of information when measuring information gain in parameters / objective function).
 
 
 \noindent \textbf{Particle transport methods} \emph{``Particles may be regarded as Dirac-delta approximations of otherwise continuous measures or densities. However, continuum transport problems differ from true particle-dynamics problems in one important respect $\cdots$ The velocity field that governs the instantaneous motion of the particles depends on local density gradients, not just particle positions.''} - from paper on OT methods for advection-diffusion \cite{fedeli_geometrically-exact_2017}. An example of advection using particle based methods can be found here: \href{https://docs.oceanparcels.org/en/latest/examples/tutorial_analyticaladvection.html}{Lagrangian simulators!} and some more thoughts on this over here: \url{https://math.temple.edu/~seibold/research/meshfree/}
@@ -647,7 +647,23 @@ Based on the above, however, we can draw up a very rough action plan!
     \item More theoretical stuff, quality of posterior compared to other methods, more (faraway) thoughts on kernel approximations.
 \end{enumerate}
 
+\noindent \textbf{Connections to transport maps}
 
+Let $\mu_{ref}$ be a reference distributions from which we can generate independent and unweighted samples, e.g. a standard Gaussian. Then a transport map $T$ pushes forward $\mu_{ref}$ to $\mu_{tar}$ (a target measure we wish to characterize). 
+
+Compactly, this can be written as:
+
+$$T_{\#}\mu_{ref} = \mu_{tar}$$
+
+One example of a valid transport map may be found by the global minimizer of the optimization problem based on KL divergence i.e.
+
+$$\min \DKL (T_{\#} \eta || \pi)$$
+
+s.t. $$\det \nabla T > 0$$
+
+We can also address problems of inverse transport e.g. where the target density is unknown (ABC, density estimation) and compute a transport to push forward the target to the reference measure via convex optimization. For triangular maps, the structure can be exploited to efficiently compute the inverse map from reference to the target.
+
+\textcolor{red}{Iterative construction of maps to minimize KL}
 
 \section{Results}
 
