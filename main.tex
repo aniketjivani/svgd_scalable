@@ -635,7 +635,10 @@ Based on the above, however, we can draw up a very rough action plan!
 
     and replace $f$ by the Stein update (so we need to find the expression with the kernel, and also get its trace!) - if we are not doing something silly here.
 
-    Then we can run a few comparisons right off the bat with CNFs: Number of function evaluations needed in forward and backward pass, plots of learnt dynamics (are they regularized out of the box?!) and also try experiments with a bunch of kernels.
+    \textcolor{red}{Sep 4: }One interesting point here is that the $f$ over here can be replaced by the kernel function based update. \textcolor{red}{One idea is that a spectral mixture kernel may not be degenerate for large $d$, and we could also parametrize the kernel as a neural network (think of Deep Kernel Learning style papers), because the CNF essentially gives us the ability to deal with an unrestricted Jacobian via the trace approximation. We will look at these methods next.}
+
+    \textcolor{red}{Sep 4: }Then we can run a few comparisons right off the bat with CNFs: Number of function evaluations needed in forward and backward pass, plots of learnt dynamics (are they regularized out of the box?!) and also try experiments with a bunch of kernels. 
+    \textcolor{red}{Hopefully, we get some indication of whether this is adding something useful in terms of being able to handle more particles, which would be one of the main proposed contributions}.
 
     To be clear, we also need to investigate some claims in greater detail, notably performance improvements of CNFs over NFs, 
     % what freedom it allows in terms of choice of $f$ and trying to find more robust links between the OT-based regularization and any `implicit' regularization in Stein's method. The motivation is also not completely clear, and we should clarify how it fits into the broader aims of the thesis too.
