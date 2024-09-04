@@ -369,7 +369,7 @@
 
 \linenumbers
 
-\title{SVGD-style continuous NFs for Bayesian Inference}
+\title{SVGD via Continuous Kernel Normalizing Flows for Bayesian Inference}
 \author{Aniket}
 \date{\today}
 
@@ -377,7 +377,7 @@
 
 \maketitle
 
-(many thanks to Thomas Coons for sparking my interest in this topic - this is a very rich area of computational statistics)
+(many thanks to Thomas Coons for sparking my interest in this topic - this is a very rich area of computational statistics that needs more attention and some cool new ideas!!!)
 
 \section{Abstract}
 
@@ -639,6 +639,8 @@ Based on the above, however, we can draw up a very rough action plan!
 
     \textcolor{red}{Sep 4: }Then we can run a few comparisons right off the bat with CNFs: Number of function evaluations needed in forward and backward pass, plots of learnt dynamics (are they regularized out of the box?!) and also try experiments with a bunch of kernels. 
     \textcolor{red}{Hopefully, we get some indication of whether this is adding something useful in terms of being able to handle more particles, which would be one of the main proposed contributions}.
+
+    \textcolor{red}{Sep 4: One more gotcha is that kernelized flows are not a new subject. Here's a recent paper introducing them as a parameter efficient means to do NF - see \cite{english_kernelised_2024} for more!}
 
     To be clear, we also need to investigate some claims in greater detail, notably performance improvements of CNFs over NFs, 
     % what freedom it allows in terms of choice of $f$ and trying to find more robust links between the OT-based regularization and any `implicit' regularization in Stein's method. The motivation is also not completely clear, and we should clarify how it fits into the broader aims of the thesis too.
