@@ -369,313 +369,47 @@
 
 \linenumbers
 
-\title{SVGD via Continuous Kernel Normalizing Flows for Bayesian Inference}
-\author{Aniket}
+\title{Scalable Stein Variational Gradient Descent via Adaptive Spectral Delta Kernel Learning}
+\author{}
 \date{\today}
 
 \begin{document}
 
 \maketitle
+\section*{Abstract}
 
-(many thanks to Thomas Coons for sparking my interest in this topic - this is a very rich area of computational statistics that needs more attention and some cool new ideas!!!)
+\section{Introduction}
 
-\section{Abstract}
-
-(main motivation is to have a solid and reliable way of building BNNs - also maybe needed for BOED surrogate training if we are looking for MCMC alternatives -  we need to understand the theory behind Stein a bit better for that)
-
-(we will review the use of SVGD for Bayesian Inference, the challenges in scaling it up and if ideas from sparse GPs could be applied to make it more usable with many particles)
-
-(another perspective is that of continuous normalizing flows. Can tricks from these e.g. trace estimators help with the computation for many particles? also, is there an elegant and simple way to tie together the framework of continuous time NNs and weight updates as a single augmented system?)
+\section{Related Work}
 
 \begin{enumerate}
-    \item SVGD review \cite{liu_short_2016,liu_kernelized_2016,liu_stein_2019}
+    \item Projected SVGD \cite{chen_projected_2020}
 
-    \item SVGD drawbacks (mode collapse?) and projected SVGD \cite{chen_projected_2020}
+    \item Spectral Delta Kernels \cite{lazaro-gredilla_sparse_2010}
 
-    \item Ideas from sparse GP + VI \url{https://gpss.cc/gpss17/slides/gp-approx-new.pdf} and \cite{noack_unifying_2023}. Slightly better: start from the simplest case i.e. \cite{snelson_sparse_2005} and then move on to \cite{titsias_variational_2009,titsias_bayesian_2010}
+    \item Active Subspace based reduction for BNNs \cite{jantre_learning_2023}
 
-    \item Accelerated SVGD? SVI for Deep GPs? \cite{hoffman_stochastic_2013}
+    \item Continuous Normalizing Flows \cite{grathwohl_ffjord_2018}
 
-    \item are there any ideas from structure preserving methods (is HMC structure preserving?) that can be seamlessly incorporated into SVGD? here are structure preserving Gaussian processes as an example: \url{https://arxiv.org/pdf/2102.01606.pdf}
-    
-    \item (hopefully) success!
+    \item Kernelized Normalizing Flows \cite{english_kernelised_2024}
+
+    \item SVGD as Gradient Flow \cite{liu_stein_2017}
+
+    \item Alternate forms of the Stein Operator based on divergence \textcolor{red}{ours!}
 \end{enumerate}
-
-\section{Literature}
-We motivate our method by first introducing the concepts of Stein discrepancy, Stein gradient descent, learning kernel operators from Gaussian Processes and the scope for introducing more scalable methods for the same. 
-
-GPs are specified by a placing a Gaussian prior on the space of functions $f$ that model the mapping between inputs $X$ and outputs $y$:
-
-$$p(f | X) = \mathcal{N}(0, K_N)$$
-
-Here $K$ is the (parametrized) covariance kernel which expresses some prior notion of smoothness of the underlying function.
-
-The marginal likelihood $p(y | X, \mathcal{D}, \theta)$ is used to train the GP and learn the hyperparameters. The posterior predictive distribution uses standard formulas for update of the mean and covariance of the prior GP, and is generally prohibitive for vanilla GPs because of the $O(N^3)$ cost of the covariance matrix.
-
-\subsection{Sparse GPs}
-
-\citep{snelson_sparse_2005} To fit a sparse GP, we consider a pseudo-dataset $\bar{\mathcal{D}} = \{(\bar{X}, \bar{f})_m\}_{m=1}^{M}$, with $M<N$ Since the targets are not real observations, they are denoted by $\bar{f}$ instead of $\bar{y}$ and set equal to latent function values.
-
-We have to determine the following:
-
-\begin{enumerate}
-    \item Posterior distribution over pseudo-targets $\bar{f}$
-
-    \item Predictive distribution for new $x_{\ast}$
-
-    \item Marginal likelihood expression to find pseudo-input locations!
-\end{enumerate}
-
-\subsection{SVGD Algorithm}
-Most of the math for SVGD comes from \cite{liu_short_2016,liu_kernelized_2016}.
-
-Consider set of initial particles $\{x_i^0\}_{i=1}^n$ and target density $p(x)$. Then for $l$ update steps, the following transports points from initial distribution to target distribution $p(x)$ (or its approximation $q(x)$)
-
-$$x_i^{l+1} \leftarrow x_i^{l} + \epsilon \frac{1}{n}\sum_{i=1}^{n}\left[k(x_j^l, x) \nabla_{x_j^l}(p(x_j^l)) + \nabla_{x_j^l}k(x_j^l, x)\right]$$
-
-% \begin{algorithm}
-% \caption{SVGD from \cite{liu_kernelized_2016}}\label{alg: svgd_vanilla}
-% \begin{algorithmic}
-% \KwData{$p(x)$}
-
-% \For{\texttt{blah}}
-% \STATE $i\gets 10$
-% \IF {$i\geq 5$} 
-%   \STATE $i\gets i-1$
-% \ELSE
-%   \IF {$i\leq 3$}
-%     \STATE $i\gets i+2$
-%   \ENDIF
-% \ENDIF
-
-% \end{algorithmic}
-% \end{algorithm}
-
-\subsection{Projected SVGD}
-\citep{chen_projected_2020} Projected SVGD finds a low-dimensional subspace for projecting $x$ and performs SVGD on a lower dimensional $x$ to avoid the kernel function becoming degenerate for large $d$. This feels like it solves the major problems of SVGD already, but we are probably coming at it from a different angle i.e. just the steps and approximations of the original algorithm and if there are any generalizations or improvements to be pursued there.
-
-\subsection{Normalizing Flows}
-Understanding CNFs also requires that we obtain a detailed understanding of how normalizing flows are proposed and solved, as well as the divergence loss depending on the target application. \cite{papamakarios_normalizing_2021}
 
 \section{Methodology}
 
-Let's start by asking the following questions:
-\begin{enumerate}
-    \item What kinds of kernels does SVGD hold for? What alternatives exist to avoid degeneracy? The original paper still claims that a lot of the problematic parts of large $n$ can be easily bypassed.
-
-    \item Is there a meaningful connection between determination of pseudo-inputs for sparse GPs and GD style updates? How do we find pseudo-inputs for the SVGD case? \textcolor{red}{remember that this is most likely a fruitless exercise, these ideas are defined for very different applications: entirely non-parametric methods vs NNs where people look for nice ways to combine optimization over NN parameters (data-fitting) with posterior updates for the weights.}
-
-    \textcolor{red}{We either need stand-alone kernel approximations - which don't involve learning inducing points, or a clever way to learn inducing point locations}
-
-    \begin{enumerate}
-        \item Initialize inducing points
-
-        \item (some update step for transporting inducing points)
-
-        \item (some correction step for moving them around so they represent the original dataset)
-    \end{enumerate}
-
-    \item What are the precise connections between SVGD and flow-based models like CNFs? Can we combine neural network weight updates in a flow-based model with posterior computations?
-
-    \textcolor{blue}{The simplest thing we can actually try, funnily enough, is just replacing $p(.)$ by some MLP and / or a richer kernel representation for $k$ - the points being that}
-    
-    \begin{enumerate}
-        \item we can get rid of the variational family and consider a more general case - if there is a strong case for the quality of posterior learnt by VI
-
-        \item Right now a lot of the methodology here feels like a bunch of tricks to learn the kernel hyperparameters - but surely there is a rigorous way to actually learn these, or a more general and flexible form of Stein that accomodates different choices - again, if there are advantages for a different kernel family (how do we show this?) - the theory and literature on spectral delta kernels makes it clear that there are problems where composing kernels or learning an arbitrary stationary kernel is beneficial. 
-    \end{enumerate}
-
-    \item SVGD for Monte-Carlo integration (in combination with level-set methods)
-\end{enumerate}
-
-
-
-% Here is the original algorithm for performing SVGD (assume RBF kernel):
-
-
-% \noindent Here's our approximation.
-
-
-% \noindent Here's the modified algorithm.
-
-Let's write down some notes for answering question 3 first:
-
-First we remember that the map is usually constructed to be invertible, starting from the data-generating distribution $x$ and mapping to a standard base distribution (e.g. particles from $q_0$) i.e. the flow direction is reversed. The invertibility ensures we can then draw from the base distribution to sample the posterior distribution.
-
-Let $l$ represent the artificial depth variable or the time variable for integration, and $y_i$ some state variable we wish to update then:
-
-$$y_i^l = y_i^0 + \int_0^{l}g_\theta(y_0, l)dl$$
-
-where $g_\theta$ is the MLP for the flow dynamics.
-
-For CNFs the above can be written as:
-
-$$\log p(x) = \log p(x_0) + \int_l^0 -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
-
-\stkout{The base distribution gets approximated by particles over here as well, so we end up with (for a single step update):}
-
-$$x_i^{l+1} = x_i^{l} + \int_{t_{l + 1}}^{t_l} -\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl$$
-
-
-and at the final step:
-
-$$x_i^{l} = x_i^{0} + \int_{l}^{0}\operatorname{Tr}\left(\frac{\partial f}{\partial x}\right) dl $$
-
-\textcolor{red}{okay, so the above is definitely wrong. Its not that the base distribution is approximated by particles, rather CNF solves an augmented system where we find the particle that generates a specific $x$ and solve for the instantaneous change of variables formula that maximizes the log-likelihood of $x$ under that transformation.}
-
-
-\stkout{(doing what's already been done before and probably isn't very remarkable once I think about it a little more, unless I am very mistaken). Let's take a small step back. Before we introduce the kernel function, the original Stein operator based update, when using a variational family $q(x)$ to approximate $p(x)$ reads as:}
-
-% $$x_i^{l+1} = x_i^{l} + \mathbb{E}_{x \sim q}\left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right]$$
-
-\begin{equation*}
-    x_i^{l+1} = x_i^{l} + \epsilon \mathbf{\phi}_{\hat{\mu}_l^n, p}^{\ast}(x_l^i)
-\end{equation*}
-
-the problematic part of the Stein approximation is that of the non-linear velocity field $\phi$ which should maximally decrease KL divergence w.r.t. target distribution. 
-
-Another way to write it is through the operation of a fixed point non-linear map on empirical measure $\hat{\mu}$:
-
-$$\hat{\mu}_{l + 1}^n = \Phi_p (\hat{\mu}_l^n)$$
-
-% or,
-
-% $$x_i^{l+1} = x_i^{l} + \int \left[-\operatorname{Tr}(\mathcal{A}_p \phi(x))\right] q(x) dx$$
-
-
-\subsection{Metrics for normalizing flows}
-
-(from \cite{papamakarios_normalizing_2021}):
-Options for comparing distributions are grouped into two general families (density ratios vs differences):
-
-\begin{enumerate}
-    \item $f$-divergence:
-
-    $$D_f\left[p_\mathrm{x}^*(\mathbf{x})\parallel p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})\right]=\mathbb{E}_{p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})}\left[f\left(\frac{p_\mathrm{x}^*(\mathbf{x})}{p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})}\right)\right]$$
-
-    \item Integral Probability Metrics (IPMs) (\textcolor{red}{Stein uses maximum mean discrepancy?})
-
-    $$\delta_s\left[p_\mathrm{x}^*(\mathbf{x})\left\|p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})\right.\right]=\mathbb{E}_{p_\mathrm{x}^*(\mathbf{x})}\left[\left.s(\mathbf{x})\right.\right]-\mathbb{E}_{p_\mathrm{x}(\mathbf{x};\boldsymbol{\theta})}\left[\left.s(\mathbf{x})\right.\right]$$
-\end{enumerate}
-
-(using example of divergence) - we have to choose between forward and reverse KL. The forward KL is well suited for when we have samples from the target distribution (or we can generate them) but we cannot necessarily evaluate the target density. Minimizing the MC approximation of the KL divergence here is equivalent to fitting the flow-based model by MLE.
-
-The reverse KL is often used for variational inference - we can fit a flow based model even if we cannot evaluate the base density or compute inverse transformation - it is useful when samples cannot be drawn efficiently from the target model, so the flow model essentially replaces the target model as a fast surrogate.
-
-\subsection{Continuous normalizing flows for BI}
-
-
-\section{General Literature}
-
-\noindent \textbf{Latent Force Models:} Connecting Differential Equations and GP Kernels - see \cite{alvarez09a} for details.
-
-\noindent This assumes latent forcing functions that give rise to the state evolution of the system, and assuming a GP prior on those functions leads to closed form expressions for the output kernel. Then the log-likelihood can be minimized, leading to standard inference based on GP regression.
-
-\noindent \textbf{Sparse Spectrum Kernels:} Based on trigonometric basis functions, Fourier duals - see \cite{lazaro-gredilla_sparse_2010}
-
-Details of Stein's Operator and Applications: See \cite{anastasiou_steins_2023}
-
-\noindent Derivation of SVGD!
-
-
-\noindent Rewriting the Variational part with a different approximation (\textsc{REINFORCE} vs the reparametrization trick! - see \url{https://stillbreeze.github.io/REINFORCE-vs-Reparameterization-trick/} for details
-
-
-\noindent Details of amortized Stein for training probabilistic NNs: See \cite{feng_learning_2017}
-
-
-\noindent \textcolor{red}{\textbf{Stein operators for other divergences:}} This basically means that we come up with a viable form of the Stein operator s.t. the maximization of the Stein discrepancy can be linked with other divergence formulas. See \cite{zozor_debruijn_2015} and functional gradients for ways to evaluate arbitrary divergences. \textcolor{red}{This would give rise to a generalized version of SVGD.} 
-
-
-\noindent \textcolor{red}{Other divergences?}: Also see - \cite{kattumannil_steins_2009} for generalization of Stein's identity to exponential families. Finally, if there is a reason to favour Wasserstein distance over regular KL, \cite{huggins_practical_2018} bounds Wasserstein distance via the $(p, \nu)-$Fisher distance:
-
-$$d_{p, \nu} (\eta, \hat{\eta}) = \| \| \nabla U - \nabla \hat{U}\|_2\|_{L^p(\nu)} = \left\{\int \| \nabla U(\theta) - \nabla \hat{U}(\theta) \|_2^p \nu(d\theta)\right\}^{1/p}$$ where $U = -\log d\hat{\eta}/d\theta$.
-
-A more simplified notation for the above (called in other places as the \emph{Fisher divergence} or the \emph{Fisher information distance} is given as \citep{sriperumbudur_density_2017}:
-
-$$J(p || q) = \frac{1}{2} \int_{\Omega} p(x) ||\nabla \log p(x) - \nabla \log q(x)||_2^2 dx$$
-
-Funnily, Fisher is closely related to KL through the de Bruijn's identity (see the above reference for more details), and ostensibly its a stronger form of convergence than in KL (total variation distance?) (also see \url{https://math.stackexchange.com/a/4711339})
-
-A final interesting point is using variational approximations for Fisher divergence instead of KL - see \cite{yang_variational_2019} for a proposed method that does away with mean-field assumptions (we are not picky about using KL for Bayesian inference unlike for OED because the latter has theoretical constraints for what counts as a measure of information when measuring information gain in parameters / objective function).
-
-
-\noindent \textbf{Particle transport methods} \emph{``Particles may be regarded as Dirac-delta approximations of otherwise continuous measures or densities. However, continuum transport problems differ from true particle-dynamics problems in one important respect $\cdots$ The velocity field that governs the instantaneous motion of the particles depends on local density gradients, not just particle positions.''} - from paper on OT methods for advection-diffusion \cite{fedeli_geometrically-exact_2017}. An example of advection using particle based methods can be found here: \href{https://docs.oceanparcels.org/en/latest/examples/tutorial_analyticaladvection.html}{Lagrangian simulators!} and some more thoughts on this over here: \url{https://math.temple.edu/~seibold/research/meshfree/}
-
-\noindent \textbf{SVGD as Gradient Flow} Stein is a particle-based approximation to an evolutionary PDE of densities or measures...\emph{Empirical measures of SVGD samples weakly converge to the target distribution, $\cdots$ asymptotic behaviour $\cdots$ characterized by a nonlinear Fokker-Planck equation known as Vlasov equation in physics.} \cite{liu_stein_2017}
-
-Our understanding here is still incomplete, mainly w.r.t the following few points:
-
-\begin{enumerate}
-    \item Derivation of the gradient flow equation - I am completely lost in the steps there - some trace trick?
-
-    \item Derivation of the gradient step of KL in terms of the kernel and the Fisher score
-
-    \item Minimization of other Stein discrepancies (non-kernelized) (see \cite{anastasiou_steins_2023} for overview)
-
-    \item Theorem 3.3 from \cite{liu_stein_2017}
-
-    \item Fixed point iteration perspective vs differential equation perspective (one is for particles while the other is for densities??)
-\end{enumerate}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{figures/stein_overview.jpg}
-    \caption{My rudimentary understanding of the ideas involved in Stein}
-    \label{fig:stein-big-picture}
-\end{figure}
-
-Based on the above, however, we can draw up a very rough action plan!
-
-\begin{enumerate}
-    \item \stkout{How many particles are too many? i.e. when does the kernel approximation really break down? Probably need to stress test on some tougher canonical example for this.} How many particles are too little? How costly is it to run more particles? (with all tricks related to subsampling etc.)? Stress test on a tougher canonical example. Definitely , pSVGD could also be an interesting use case (numerical stability of active subspace eigenvectors?? - see \cite{hauth_advances_2024} for details.)
-
-    \item Start with the augmented CNF \cite{grathwohl_ffjord_2018}:
-    $$\underbrace{\begin{bmatrix}\mathbf{z}_0\\\log p(\mathbf{x})-\log p_{z_0}(\mathbf{z}_0)\end{bmatrix}}_{\text{solutions}}=\underbrace{\int_{t_1}^{t_0}\begin{bmatrix}f(\mathbf{z}(t),t;\theta)\\-\operatorname{Tr}\left(\frac{\partial f}{\partial\mathbf{z}(t)}\right)\end{bmatrix}dt}_{\text{dynamics}},\quad\underbrace{\begin{bmatrix}\mathbf{z}(t_1)\\\log p(\mathbf{x})-\log p(\mathbf{z}(t_1))\end{bmatrix}=\begin{bmatrix}\mathbf{x}\\0\end{bmatrix}}_{\text{initial values}}$$
-
-    and replace $f$ by the Stein update (so we need to find the expression with the kernel, and also get its trace!) - if we are not doing something silly here.
-
-    \textcolor{red}{Sep 4: }One interesting point here is that the $f$ over here can be replaced by the kernel function based update. \textcolor{red}{One idea is that a spectral mixture kernel may not be degenerate for large $d$, and we could also parametrize the kernel as a neural network (think of Deep Kernel Learning style papers), because the CNF essentially gives us the ability to deal with an unrestricted Jacobian via the trace approximation. We will look at these methods next.}
-
-    \textcolor{red}{Sep 4: }Then we can run a few comparisons right off the bat with CNFs: Number of function evaluations needed in forward and backward pass, plots of learnt dynamics (are they regularized out of the box?!) and also try experiments with a bunch of kernels. 
-    \textcolor{red}{Hopefully, we get some indication of whether this is adding something useful in terms of being able to handle more particles, which would be one of the main proposed contributions}.
-
-    \textcolor{red}{Sep 4: One more gotcha is that kernelized flows are not a new subject. Here's a recent paper introducing them as a parameter efficient means to do NF - see \cite{english_kernelised_2024} for more!}
-
-    To be clear, we also need to investigate some claims in greater detail, notably performance improvements of CNFs over NFs, 
-    % what freedom it allows in terms of choice of $f$ and trying to find more robust links between the OT-based regularization and any `implicit' regularization in Stein's method. The motivation is also not completely clear, and we should clarify how it fits into the broader aims of the thesis too.
-
-    \textcolor{red}{One key advantage may be that once the change of variables formula has been simplified to use the trace, unbiased estimators of the trace can be deployed, resulting in a free-form Jacobian.}
-
-    \textcolor{red}{What then about the form of $f$?} One idea is that $f = \grad_x \log p(x) \phi(x)^T + \grad_x \phi(x)$ where $\phi$ can now be replaced by any suitable choice of kernel. I wonder if this becomes a two-step update in that case, where we first solve for $z$ with some initialized / older value for $p(x)$ and then update the logpdf of the same in the second step (this suddenly looks suspiciously like symplectic integration).
-
-    \item More theoretical stuff, quality of posterior compared to other methods, more (faraway) thoughts on kernel approximations.
-\end{enumerate}
-
-\noindent \textbf{Connections to transport maps}
-
-Let $\mu_{ref}$ be a reference distributions from which we can generate independent and unweighted samples, e.g. a standard Gaussian. Then a transport map $T$ pushes forward $\mu_{ref}$ to $\mu_{tar}$ (a target measure we wish to characterize). 
-
-Compactly, this can be written as:
-
-$$T_{\#}\mu_{ref} = \mu_{tar}$$
-
-One example of a valid transport map may be found by the global minimizer of the optimization problem based on KL divergence i.e.
-
-$$\min \DKL (T_{\#} \eta || \pi)$$
-
-s.t. $$\det \nabla T > 0$$
-
-We can also address problems of inverse transport e.g. where the target density is unknown (ABC, density estimation) and compute a transport to push forward the target to the reference measure via convex optimization. For triangular maps, the structure can be exploited to efficiently compute the inverse map from reference to the target.
-
-\textcolor{red}{Iterative construction of maps to minimize KL}
-
 \section{Results}
 
-\section{Conclusions}
+\section{Conclusions and Extensions}
+
 
 
 \bibliography{local,references}
+
+
+\section*{Appendix}
 
 \end{document}
 
