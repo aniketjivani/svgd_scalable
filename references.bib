@@ -1,4 +1,41 @@
 
+@inproceedings{alsup_multilevel_2022,
+	title = {Multilevel {Stein} variational gradient descent with applications to {Bayesian} inverse problems},
+	url = {https://proceedings.mlr.press/v145/alsup22a.html},
+	abstract = {This work presents a multilevel variant of Stein variational gradient descent to more efficiently sample from target distributions. The key ingredient is a sequence of distributions with growing fidelity and costs that converges to the target distribution of interest. For example, such a sequence of distributions is given by a hierarchy of ever finer discretization levels of the forward model in Bayesian inverse problems. The proposed multilevel Stein variational gradient descent moves most of the iterations to lower, cheaper levels with the aim of requiring only a few iterations on the higher, more expensive levels when compared to the traditional, single-level Stein variational gradient descent variant that uses the highest-level distribution only. Under certain assumptions, in the mean-field limit, the error of the proposed multilevel Stein method decays by a log factor faster than the error of the single-level counterpart with respect to computational costs. Numerical experiments with Bayesian inverse problems show speedups of more than one order of magnitude of the proposed multilevel Stein method compared to the single-level variant that uses the highest level only.},
+	language = {en},
+	urldate = {2024-09-18},
+	booktitle = {Proceedings of the 2nd {Mathematical} and {Scientific} {Machine} {Learning} {Conference}},
+	publisher = {PMLR},
+	author = {Alsup, Terrence and Venturi, Luca and Peherstorfer, Benjamin},
+	month = apr,
+	year = {2022},
+	pages = {93--117},
+}
+
+@inproceedings{ba_towards_2019,
+	title = {Towards {Characterizing} the {High}-dimensional {Bias} of {Kernel}-based {Particle} {Inference} {Algorithms}},
+	url = {https://openreview.net/forum?id=Byg9KJn4Fr},
+	abstract = {Particle-based inference algorithm is a promising method to efficiently generate samples for an intractable target distribution by iteratively updating a set of particles. As a noticeable example, Stein variational gradient descent (SVGD) provides a deterministic and computationally efficient update, but it is known to underestimate the variance in high dimensions, the mechanism of which is poorly understood. In this work we explore a connection between SVGD and MMD-based inference algorithm via Stein's lemma. By comparing the two update rules, we identify the source of bias in SVGD as a combination of high variance and deterministic bias, and empirically demonstrate that the removal of either factors leads to accurate estimation of the variance. In addition, for learning high-dimensional Gaussian target, we analytically derive the converged variance for both algorithms, and confirm that only SVGD suffers from the "curse of dimensionality".},
+	language = {en},
+	urldate = {2024-09-18},
+	author = {Ba, Jimmy and Erdogdu, Murat A. and Ghassemi, Marzyeh and Suzuki, Taiji and Sun, Shengyang and Wu, Denny and Zhang, Tianzong},
+	month = dec,
+	year = {2019},
+}
+
+@misc{martin_informative_2021,
+	title = {Informative priors for correlation matrices: {An} easy approach},
+	shorttitle = {Informative priors for correlation matrices},
+	url = {https://srmart.in/informative-priors-for-correlation-matrices-an-easy-approach/},
+	language = {en-US},
+	urldate = {2024-09-18},
+	journal = {Stephen R. Martin, PhD},
+	author = {Martin, Stephen},
+	month = apr,
+	year = {2021},
+}
+
 @misc{jantre_learning_2023,
 	title = {Learning {Active} {Subspaces} for {Effective} and {Scalable} {Uncertainty} {Quantification} in {Deep} {Neural} {Networks}},
 	url = {http://arxiv.org/abs/2309.03061},
