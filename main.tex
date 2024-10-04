@@ -397,12 +397,60 @@
 
     \item Stein breakdown in high dimensions \cite{ba_towards_2019}
 
+    \item Stein's Method for High Dimensions \cite{chang_kernel_2020} - while the paper is almost unreadable, the authors try to use ideas from score matching such as Anneal-SGLD on the vanilla SVGD procedure and find that the kernel choice is inadequate because the bandwidth is not changing with respect to the noise level. Their proposed kernel includes an autoencoder for dimensionality reduction and conditions the hyperparameters on $\sigma$.
+
     \item Multilevel SVGD \cite{alsup_multilevel_2022}
+
 
     \item Alternate forms of the Stein Operator based on divergence \textcolor{red}{ours!}
 \end{enumerate}
 
 \section{Methodology}
+
+\subsection{Bifidelity Model / Surrogate SVGD}
+
+Consider high-fidelity and low-fidelity models with their corresponding likelihood:
+
+\begin{align}
+ L_0 &= p(y_0 | x, \theta) = \prod_{i=1}^{N} p(y_0^i | x, \theta) \\
+ L_1 &= p(y_1 | x, \theta) = \prod_{i=1}^{N} p(y_1^i | x, \theta)
+\end{align}
+
+
+Then assuming an additive correction, a simple Stein update for the parameters $\theta_i$ would become:
+
+\begin{equation}
+    \theta_i \leftarrow \theta_i + \epsilon \phi^{\ast}(\theta)
+\end{equation}
+
+where 
+
+\begin{equation}
+    \phi^{\ast}(\theta) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta) \grad_{\theta_j}[\log (L_{1}(\theta_j) + L_{\Delta}(\theta_j) + \log p(\theta)] + \grad_{\theta_j} k(\theta_j, \theta)]
+\end{equation}
+
+But this is not very satisfying, for one it requires us to come up with a model for $L_{\Delta}$, as is the need for pilot samples to correlate the two models.
+
+\subsection{Generalized Multifidelity SVGD}
+
+We treat the Stein updates as scalar QoIs. Then high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
+
+\begin{equation*}
+    \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
+\end{equation*}
+
+And similarly, for lower-fidelity models indexed from $1$ to $m$,
+
+\begin{equation*}
+    \theta^{(j)}_i \leftarrow \theta^{(j)}_i + \epsilon \phi^{\ast}(\theta^{(j)}), \quad j=1, \cdots, m
+\end{equation*}
+
+\subsection{Particle assignment to various fidelities}
+
+\emph{Method 1: Randomized Assignment}
+
+
+\noindent \emph{Method 2: Resource allocation using model correlations}
 
 \section{Results}
 
