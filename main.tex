@@ -460,7 +460,8 @@ A key advantage offered by graph-based methods apart from the inherent invarianc
 This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, for e.g. \cite{sanchez-gonzalez_learning_2020}.
 
 A key drawback, of course, is that any such deep learning architecture is not enforcing the dynamics to step the particles in the direction of the KL-divergence. 
-It is also unclear if the discretization-invariance property grants any advantages in representing the posterior distribution either explicitly or through varying numbers of particles. One possibility is exploiting methods such as \cite{feng_learning_2017} to train a neural simulator with better inductive bias such as that offered by GNs.
+It is also unclear if the discretization-invariance property grants any advantages in representing the posterior distribution either explicitly or through varying numbers of particles. One possibility is exploiting methods such as \cite{feng_learning_2017} to train a neural simulator with better inductive bias such as that offered by GNs. 
+At the very least, ideas on subset selection and graph compression could provide a good cross-pollination for inference with particle-based methods.
 
 
 \section{Results}
