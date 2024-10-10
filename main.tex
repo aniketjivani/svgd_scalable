@@ -271,6 +271,7 @@
 \newcommand{\CD}{\mathcal{D}}
 \newcommand{\CE}{\mathcal{E}}
 \newcommand{\CF}{\mathcal{F}}
+\newcommand{\CG}{\mathcal{G}}
 \newcommand{\CH}{\mathcal{H}}
 \newcommand{\CJ}{\mathcal{J}}
 \newcommand{\CK}{\mathcal{K}}
@@ -453,15 +454,19 @@ And similarly, for lower-fidelity models indexed from $1$ to $m$,
 \noindent \emph{Method 2: Resource allocation using model correlations}
 
 \subsection{Graph Network Based Propagation}
-Deep learning methods that model arbitrary relational structures between elements, such as graph networks are surveyed in \cite{battaglia_relational_2018}. 
+Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
 
-Graph networks (GNs) compute interactions between all or a subset of entities and update the dynamics over multiple such blocks which accept a graph as input and return a graph with updated node features as the output. 
-A key advantage offered by graph-based methods apart from the inherent invariance to permutations is the ability to operate on graphs of different sizes and shapes. 
-This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, for e.g. \cite{sanchez-gonzalez_learning_2020}.
+GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
+The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear graphs results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph. 
 
-A key drawback, of course, is that any such deep learning architecture is not enforcing the dynamics to step the particles in the direction of the KL-divergence. 
-It is also unclear if the discretization-invariance property grants any advantages in representing the posterior distribution either explicitly or through varying numbers of particles. One possibility is exploiting methods such as \cite{feng_learning_2017} to train a neural simulator with better inductive bias such as that offered by GNs. 
-At the very least, ideas on subset selection and graph compression could provide a good cross-pollination for inference with particle-based methods.
+Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
+This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
+
+Without additional constraints however, a GNN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
+It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
+However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
+We begin with a brief overview of our proposed changes below:
+
 
 
 \section{Results}
