@@ -19,7 +19,7 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-\usepackage{natbib}
+\usepackage{mathtools}
 \usepackage{xurl}
 \usepackage{lineno}
 \usepackage{amsthm}
@@ -35,32 +35,16 @@
 \usepackage{tabularx}
 
 \usepackage{graphicx}
-\usepackage{xcolor}
-\usepackage{float}
-\usepackage{url}
 % \setlength\LTleft{0pt}
-\usepackage{tabularx}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{amssymb}
-\usepackage{natbib}
+
+
 % \bibliographystyle{unsrt}
 \bibliographystyle{agu}
 % \bibliographystyle{plainnat}
 
 \newcommand\prob{\mathbb{P}}
 
-\usepackage{xurl} %
-%
-\usepackage{lineno}
 
-\usepackage{soul}
-%
-%
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsthm}
-\usepackage{float}
 %
 \usepackage{epsfig}
 \usepackage[linesnumbered, ruled]{algorithm2e}
@@ -88,7 +72,8 @@
 \newcommand{\resp}[1]{\textcolor{red}{\textbf{Response: } #1}}
 \newcommand{\respc}[1]{\textcolor{red}{#1}}
 
-
+\newcommand\Myperm[2][^n]{\prescript{#1\mkern-2.5mu}{}P_{#2}}
+\newcommand\Mycomb[2][^n]{\prescript{#1\mkern-0.5mu}{}C_{#2}}
 %
 \renewcommand{\[}{\left[}
 \renewcommand{\]}{\right]}
@@ -371,7 +356,7 @@
 \linenumbers
 
 \title{Scalable Stein Variational Gradient Descent via Adaptive Spectral Delta Kernel Learning and Multifidelity Likelihoods}
-\author{}
+% \author{Aniket Jivani, Thomas Coons}
 \date{\today}
 
 \begin{document}
@@ -381,8 +366,9 @@
 Stein's method was originally developed to approximate certain classes of computations in terms of properties of a family of probability-characterising linear operators. 
 These operators have since found application in a number of problems in probability, information theory, optimal transport and inference. 
 A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
-However this method frequently breaks down in higher dimensions without the use of projection-based approximations, and often relies on other heuristics to characterize and compute the kernel evaluations. 
+However this method frequently breaks down in higher dimensions without the use of projection-based approximations, and often relies on other heuristics to characterize and compute the kernel evaluations.
 In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
+We then introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models for the likelihood.
 We also propose some extensions to the original method that bridge the gap to the broader literature on graph-based techniques, flow-based methods and kernel machines. 
 The connections uncovered in this process can facilitate the use of Stein's method in a much broader setting.
 
@@ -481,6 +467,18 @@ We begin with a brief overview of our proposed changes below:
 
 
 \section{Results}
+
+\subsection{Posterior Approximation in High Dimensions}
+
+
+\subsection{Density Estimation}
+We consider the quality of density estimation for varying numbers of particles. 
+We also consider the case where the original inference is performed on a small set of $N$ particles, but density estimation may be desired with additional particles at test time. 
+Then we need the ability to perform rapid approximation of positions for $K$ new particles introduced at test time. 
+This would require $\Mycomb[(N+K)]{2} - \Mycomb[N]{2} = \frac{1}{2}(K^2 + 2NK - K)$ additional distance calculations and $K$ potentially expensive likelihood computations followed by density estimation in the naive setting. 
+By contrast, a trained simulator that is `discretization invariant' in some sense can update the particles and provide better density estimates in a semi-supervised manner.
+
+\subsection{}
 
 \section{Conclusions and Extensions}
 
