@@ -378,7 +378,13 @@
 
 \maketitle
 \section*{Abstract}
-Stein's method was originally developed to approximate certain classes of computations in terms of properties of a family of probability-characterising linear operators. These operators have since found application in a number of problems in probability, information theory, optimal transport and inference. A popular and simple method for performing Bayesian Inference relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution. However this method breaks down in higher dimensions without the use of projection-based approximations, and relies on other heuristics to ensure feasibility of kernel computations. In this work, we begin by characterizing the exact trade-offs of Stein's method, and propose some extensions to the original method that make it useful for deep neural networks while connecting it to the broader literature on graph-based and flow-based methods.
+Stein's method was originally developed to approximate certain classes of computations in terms of properties of a family of probability-characterising linear operators. 
+These operators have since found application in a number of problems in probability, information theory, optimal transport and inference. 
+A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
+However this method frequently breaks down in higher dimensions without the use of projection-based approximations, and often relies on other heuristics to characterize and compute the kernel evaluations. 
+In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
+We also propose some extensions to the original method that bridge the gap to the broader literature on graph-based techniques, flow-based methods and kernel machines. 
+The connections uncovered in this process can facilitate the use of Stein's method in a much broader setting.
 
 
 
