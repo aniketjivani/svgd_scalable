@@ -356,7 +356,7 @@
 \linenumbers
 
 \title{Scalable Stein Variational Gradient Descent via Adaptive Spectral Delta Kernel Learning and Multifidelity Likelihoods}
-% \author{Aniket Jivani, Thomas Coons}
+% \author{Aniket Jivani, Thomas Coons, Xun Huan}
 \date{\today}
 
 \begin{document}
@@ -370,7 +370,7 @@ However this method frequently breaks down in higher dimensions without the use 
 In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
 We then introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models for the likelihood.
 We also propose some extensions to the original method that bridge the gap to the broader literature on graph-based techniques, flow-based methods and kernel machines. 
-The connections uncovered in this process can facilitate the use of Stein's method in a much broader setting.
+The connections uncovered in this process can facilitate rapid adoption and improvements for Stein's method in a diverse set of applications.
 
 
 
@@ -461,7 +461,7 @@ The above formulation continues to allow flexibility and raises additional open 
 \begin{enumerate}
     \item The choice of the kernel function for individual model fidelities
 
-    \item The prescription of particles to different model fidelities and how it changes as we step through the method.
+    \item The allocation of particles to different model fidelities (disjoint / overlapping) and how it changes as we step through the method.
 
     \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
 
@@ -470,7 +470,29 @@ The above formulation continues to allow flexibility and raises additional open 
     \item The stopping criterion that assesses convergence to the target distribution.
 \end{enumerate}
 
-In the following sections, we will examine the impact of each of the above choices on the proposed method.
+Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
+There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of access to very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
+
+A prominent line of work that deals with the first case uses the so-called `consensus Monte Carlo methods' \citep{rabinovich_variational_2015,scott_bayes_2016}. Here a data sharding (partitioning) step is followed by independent posterior sampling on multiple machines conditioned on the data partitions. 
+The communication overhead is avoided by combining the posterior draws to form a `consensus' belief about the model unknowns. 
+The algorithm is exact for Gaussian posteriors, but broadly useful for non-Gaussian settings too. 
+
+Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
+Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods.
+While these techniques do not directly relate to the workings or performance of our proposed method, they serve as useful guiding principles to improve practical implementations of SVGD which typically rely on random particle subsampling for efficient kernel computations.
+
+A slightly more direct analogy is suggested in the concept of `graph coarsening' which is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
+In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
+
+A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. Then, deploying a multistep method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step via the high-fidelity likelihood. The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down.
+
+
+
+
+
+
+
+In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
 
 \subsection{Particle assignment to various fidelities}
 
