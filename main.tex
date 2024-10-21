@@ -478,28 +478,31 @@ The communication overhead is avoided by combining the posterior draws to form a
 The algorithm is exact for Gaussian posteriors, but broadly useful for non-Gaussian settings too. 
 
 Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
-Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods.
-While these techniques do not directly relate to the workings or performance of our proposed method, they serve as useful guiding principles to improve practical implementations of SVGD which typically rely on random particle subsampling for efficient kernel computations.
+Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods. The vague analogy we can derive here is the treatment of the high-fidelity particles as our coreset, and the kernel function that accounts for all model fidelities as a means to enforce a weighted log-likelihood.
+While these techniques do not directly relate to the workings or performance of our proposed method, they serve as useful guiding principles to improve practical implementations of SVGD which typically rely on random particle subsampling for efficient kernel computations. 
 
 A slightly more direct analogy is suggested in the concept of `graph coarsening' which is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
 In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
 
-A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. Then, deploying a multistep method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step via the high-fidelity likelihood. The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down.
-
-
-
-
-
-
+A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. Then, deploying a multistep predictor-corrector method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step via the high-fidelity likelihood. The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down in implementations. However, determination of `when to correct, what to correct' is also a non-trivial problem.
 
 In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
 
 \subsection{Particle assignment to various fidelities}
 
-\emph{Method 1: Randomized Assignment}
+\emph{Method 0: Non-randomized Assignment}
+The simplest possible setting does not attempt to reassign particles, instead, at every iteration, a fixed proportion of the particles is treated as the lower-fidelity likelihood update while the remaining are high-fidelity updates. 
+We look at the number of iterations required for convergence by monitoring the hyperparameters of the kernel function.
+
+\noindent \emph{Method 1: Randomized Assignment}
+To correct for possible bias due to incorrect particle assignment, randomized assignment shuffles the particles between the different fidelities after one or more update steps.
+
+\noindent \emph{Method 2: Assignment based on clustering methods}
+For the first time, we consider the setting where a small subset of particles is deemed to be non-redundant and a summarization of the dataset. Here, we incorporate a clustering-based heuristic that determines the high-fidelity particles based on a suitable measure of distance.
+It is of particular importance to ensure that the cost of pairwise distance computations does not grow or outweigh the cost of simpler methods such as randomized assignment i.e. there is possibility of reuse for these when we actually perform the Stein updates.
 
 
-\noindent \emph{Method 2: Resource allocation using model correlations}
+\noindent \emph{Method 3: Resource allocation using model correlations}
 
 \subsection{Graph Network Based Propagation}
 Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
