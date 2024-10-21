@@ -364,7 +364,7 @@
 \maketitle
 \section*{Abstract}
 Stein's method was originally developed to approximate certain classes of computations in terms of properties of a family of probability-characterising linear operators. 
-These operators have since found application in a number of problems in probability, information theory, optimal transport and inference. 
+These operators have since found application in a number of problems in hypothesis testing, information theory, optimal transport and inference. 
 A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
 However this method frequently breaks down in higher dimensions without the use of projection-based approximations, and often relies on other heuristics to characterize and compute the kernel evaluations.
 In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
@@ -407,11 +407,11 @@ The connections uncovered in this process can facilitate the use of Stein's meth
 
 \subsection{Bifidelity Model / Surrogate SVGD}
 
-Consider high-fidelity and low-fidelity models with their corresponding likelihood:
+Consider high-fidelity and low-fidelity models with their corresponding log-likelihoods:
 
 \begin{align}
- L_0 &= p(y_0 | x, \theta) = \prod_{i=1}^{N} p(y_0^i | x, \theta) \\
- L_1 &= p(y_1 | x, \theta) = \prod_{i=1}^{N} p(y_1^i | x, \theta)
+ L_0 &= \log p(y_0 | x, \theta) = \sum_{i=1}^{N} \log p(y_0^i | x, \theta) \\
+ L_1 &= \log p(y_1 | x, \theta) = \sum_{i=1}^{N} \log p(y_1^i | x, \theta)
 \end{align}
 
 
@@ -424,24 +424,53 @@ Then assuming an additive correction, a simple Stein update for the parameters $
 where 
 
 \begin{equation}
-    \phi^{\ast}(\theta) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta) \grad_{\theta_j}[\log (L_{1}(\theta_j) + L_{\Delta}(\theta_j) + \log p(\theta)] + \grad_{\theta_j} k(\theta_j, \theta)]
+    \phi^{\ast}(\theta) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta) \grad_{\theta_j}[(L_{1}(\theta_j) + L_{\Delta}(\theta_j) + \log p(\theta)] + \grad_{\theta_j} k(\theta_j, \theta)]
 \end{equation}
 
-But this is not very satisfying, for one it requires us to come up with a model for $L_{\Delta}$, as is the need for pilot samples to correlate the two models.
+While this framework does on the surface, construct an update equation based on multiple models, it comes with its fair share of drawbacks: for one, it requires us to propose an adequate estimator for $L_{\Delta}$, followed by a design for pilot samples to correlate the two models and a formal accounting of the bias introduced by this correction. 
+A simpler strategy is to assign model fidelities to individual particles, and modify the update algorithm suitably to target cost savings via strategic querying of high-fidelity model updates. While not quite used for Bayesian inference, similar ideas have found traction in the field of rare event estimation \cite{dhulipala_bayesian_2022}, where the objective is to use the uncertainty from low-fidelity model outputs as an indicator of proximity of particles to the failure boundary. Following this, the limit state function can be computed through the higher-fidelity model and sample the boundary efficiently.
 
 \subsection{Generalized Multifidelity SVGD}
 
-We treat the Stein updates as scalar QoIs. Then high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
+We treat the Stein update functions as scalar QoIs. Then the high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
 
 \begin{equation*}
     \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
 \end{equation*}
 
-And similarly, for lower-fidelity models indexed from $1$ to $m$,
+And similarly, for lower-fidelity models indexed from $1$ to $m$, we can compute the particle positions as:
 
 \begin{equation*}
-    \theta^{(j)}_i \leftarrow \theta^{(j)}_i + \epsilon \phi^{\ast}(\theta^{(j)}), \quad j=1, \cdots, m
+    \theta^{(l)}_i \leftarrow \theta^{(l)}_i + \epsilon \phi^{\ast}(\theta^{(l)}), \quad l=1, \cdots, m
 \end{equation*}
+
+where
+
+\begin{equation}
+    \phi^{\ast}(\theta^{(0)}) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta^{(0)}) \grad_{\theta_j}[L_{0} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta^{(0)})]
+\end{equation}
+
+\begin{equation}
+    \phi^{\ast}(\theta^{(l)}) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta^{(l)}) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta^{(l)})]
+\end{equation}
+
+While the $M$ particles are allocated to different models as $M_0, M_1, \cdots, M_m$, the above updates still use all the particles to compute the map at each iteration - this introduces interactions between the multifidelity particles in both terms: the first term driving the particles to regions of high-probability and the second term accounting for the repulsive force that prevents particle collapse into local modes. 
+
+The above formulation continues to allow flexibility and raises additional open questions regarding the following aspects:
+
+\begin{enumerate}
+    \item The choice of the kernel function for individual model fidelities
+
+    \item The prescription of particles to different model fidelities and how it changes as we step through the method.
+
+    \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
+
+    \item The frequency of updates to particles of different fidelities.
+
+    \item The stopping criterion that assesses convergence to the target distribution.
+\end{enumerate}
+
+In the following sections, we will examine the impact of each of the above choices on the proposed method.
 
 \subsection{Particle assignment to various fidelities}
 
@@ -454,12 +483,12 @@ And similarly, for lower-fidelity models indexed from $1$ to $m$,
 Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
 
 GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
-The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear graphs results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph. 
+The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear activations results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph as the output. 
 
 Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
 This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
 
-Without additional constraints however, a GNN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
+Without additional constraints however, a GN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
 It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
 However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
 We begin with a brief overview of our proposed changes below:
