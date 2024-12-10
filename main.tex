@@ -355,7 +355,7 @@
 
 \linenumbers
 
-\title{Scalable Stein Variational Gradient Descent via Adaptive Spectral Delta Kernel Learning and Multifidelity Likelihood-based Transport}
+\title{Scalable Stein Variational Gradient Descent via Sparse Attention and Multifidelity Likelihood-based Transport}
 \author{Aniket, Thomas, Xun}
 \date{\today}
 
@@ -366,10 +366,10 @@
 Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators.
 These operators have since found application in a number of problems in hypothesis testing, information theory, optimal transport and inference (see \url{https://sites.google.com/site/steinsmethod} for the rapidly growing body of literature). 
 A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
-However this method frequently breaks down in higher dimensions without the use of projection-based approximations, and often relies on other heuristics to characterize and compute the kernel evaluations.
+Similar to other Bayesian inference methods, SVGD too struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations prohibits characterization of the posterior with a large number of particles.
 In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
 We then introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models for the likelihood while maintaining interactions between particles that ultimately corrects the overall positions.
-We also propose some extensions to the original method that bridge the gap to the broader literature on graph-based techniques, flow-based methods and kernel machines. 
+We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
 The connections uncovered in this process can facilitate rapid adoption and improvements for Stein's method in a diverse set of applications, and facilitate Bayesian training of high-fidelity models in particular.
 
 
@@ -399,6 +399,7 @@ The connections uncovered in this process can facilitate rapid adoption and impr
 
     \item Multilevel SVGD \cite{alsup_multilevel_2022}
 
+    \item Sparse Sinkhorn Attention \cite{tay_sparse_2020}
 
     \item Alternate forms of the Stein Operator based on divergence \textcolor{red}{ours!}
 \end{enumerate}
@@ -480,6 +481,12 @@ The above formulation continues to allow flexibility with regards to the specifi
     \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
 \end{enumerate}
 
+\subsection{KL-Divergence Based Correction with kNN Estimator}
+
+
+
+
+
 Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
 There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of the need to process very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
 
@@ -518,21 +525,24 @@ It is of particular importance to ensure that the cost of pairwise distance comp
 
 \noindent \emph{Method 3: Resource allocation using model correlations}
 
-\subsection{Graph Network Based Propagation}
-Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
+% \subsection{Graph Network Based Propagation}
+% Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
 
-GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
-The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear activations results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph as the output. 
+% GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
+% The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear activations results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph as the output. 
 
-Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
-This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
+% Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
+% This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
 
-Without additional constraints however, a GN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
-It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
-However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
-We begin with a brief overview of our proposed changes below:
+% Without additional constraints however, a GN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
+% It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
+% However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
+% We begin with a brief overview of our proposed changes below:
 
+% \subsection{Particle Swarm Optimization based methods}
+% (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
 
+\subsection{Sparse Kernel Updates}
 
 \section{Results}
 
