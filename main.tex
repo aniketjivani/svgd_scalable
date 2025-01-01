@@ -355,7 +355,7 @@
 
 \linenumbers
 
-\title{Scalable Stein Variational Gradient Descent via Sparse Attention and Multifidelity Likelihood-based Transport}
+\title{Scalable Stein Variational Gradient Descent via Nested Multifidelity Transport}
 \author{Aniket, Thomas, Xun}
 \date{\today}
 
@@ -368,8 +368,9 @@ These operators have since found application in a number of problems in hypothes
 A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
 Similar to other Bayesian inference methods, SVGD too struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations prohibits characterization of the posterior with a large number of particles.
 In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
-We then introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models for the likelihood while maintaining interactions between particles that ultimately corrects the overall positions.
-We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
+We then introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the divergence flow field, followed by a second partitioning for the high-fidelity likelihood update.
+
+% We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
 The connections uncovered in this process can facilitate rapid adoption and improvements for Stein's method in a diverse set of applications, and facilitate Bayesian training of high-fidelity models in particular.
 
 
