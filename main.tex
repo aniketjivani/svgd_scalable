@@ -356,7 +356,7 @@
 \linenumbers
 
 \title{Scalable Stein Variational Gradient Descent via Nested Multifidelity Transport}
-\author{Aniket, Thomas, Xun}
+\author{Aniket Jivani, Thomas Coons, Xun Huan}
 \date{\today}
 
 \begin{document}
@@ -364,14 +364,15 @@
 \maketitle
 \section*{Abstract}
 Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators.
-These operators have since found application in a number of problems in hypothesis testing, information theory, optimal transport and inference (see \url{https://sites.google.com/site/steinsmethod} for the rapidly growing body of literature). 
+These operators have since found application in a number of problems in hypothesis testing, information theory, optimal transport and inference 
+% (see \url{https://sites.google.com/site/steinsmethod} for the rapidly growing body of literature). 
 A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
-Similar to other Bayesian inference methods, SVGD too struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations prohibits characterization of the posterior with a large number of particles.
-In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
-We then introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the divergence flow field, followed by a second partitioning for the high-fidelity likelihood update.
-
+Similar to other Bayesian inference methods, SVGD too struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible.
+% In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
+In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the kernel evaluations based on the neighbourhood size of each particle, followed by a second partitioning for the high-fidelity likelihood update.
+These advancements greatly accelerate the overall convergence of the SVGD algorithm, and facilitate Bayesian inference as well as stochastic optimization for expensive high-fidelity models in particular.
 % We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
-The connections uncovered in this process can facilitate rapid adoption and improvements for Stein's method in a diverse set of applications, and facilitate Bayesian training of high-fidelity models in particular.
+
 
 
 
@@ -382,8 +383,6 @@ The connections uncovered in this process can facilitate rapid adoption and impr
 \section{Related Work}
 
 \begin{enumerate}
-    \item Projected SVGD \cite{chen_projected_2020}
-
     \item Spectral Delta Kernels \cite{lazaro-gredilla_sparse_2010}
 
     \item Active Subspace based reduction for BNNs \cite{jantre_learning_2023}
@@ -396,13 +395,11 @@ The connections uncovered in this process can facilitate rapid adoption and impr
 
     \item Stein breakdown in high dimensions \cite{ba_towards_2019}
 
-    \item Stein's Method for High Dimensions \cite{chang_kernel_2020} - while the paper is almost unreadable, the authors try to use ideas from score matching such as Anneal-SGLD on the vanilla SVGD procedure and find that the kernel choice is inadequate because the bandwidth is not changing with respect to the noise level. Their proposed kernel includes an autoencoder for dimensionality reduction and conditions the hyperparameters on $\sigma$.
+    % \item Stein's Method for High Dimensions \cite{chang_kernel_2020} - while the paper is almost unreadable, the authors try to use ideas from score matching such as Anneal-SGLD on the vanilla SVGD procedure and find that the kernel choice is inadequate because the bandwidth is not changing with respect to the noise level. Their proposed kernel includes an autoencoder for dimensionality reduction and conditions the hyperparameters on $\sigma$.
 
     \item Multilevel SVGD \cite{alsup_multilevel_2022}
 
     \item Sparse Sinkhorn Attention \cite{tay_sparse_2020}
-
-    \item Alternate forms of the Stein Operator based on divergence \textcolor{red}{ours!}
 \end{enumerate}
 
 \section{Methodology}
@@ -482,33 +479,33 @@ The above formulation continues to allow flexibility with regards to the specifi
     \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
 \end{enumerate}
 
-\subsection{KL-Divergence Based Correction with kNN Estimator}
+% \subsection{KL-Divergence Based Correction with kNN Estimator}
 
 
 
 
 
-Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
-There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of the need to process very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
+% Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
+% There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of the need to process very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
 
-A prominent line of work that deals with the first case uses the so-called `consensus Monte Carlo methods' \citep{rabinovich_variational_2015,scott_bayes_2016}. Here a data sharding (partitioning) step is followed by independent posterior sampling on multiple machines conditioned on the data partitions. 
-The communication overhead is avoided by combining the posterior draws to form a `consensus' belief about the model unknowns.
-The algorithm is exact for Gaussian posteriors, but has been found to be broadly useful for non-Gaussian settings too.
+% A prominent line of work that deals with the first case uses the so-called `consensus Monte Carlo methods' \citep{rabinovich_variational_2015,scott_bayes_2016}. Here a data sharding (partitioning) step is followed by independent posterior sampling on multiple machines conditioned on the data partitions. 
+% The communication overhead is avoided by combining the posterior draws to form a `consensus' belief about the model unknowns.
+% The algorithm is exact for Gaussian posteriors, but has been found to be broadly useful for non-Gaussian settings too.
 
-Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
-Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods. A superficial analogy we can draw is the treatment of the high-fidelity particles as our coreset, and the kernel function that accounts for all model fidelities as a means to enforce a weighted log-likelihood.
+% Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
+% Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods. A superficial analogy we can draw is the treatment of the high-fidelity particles as our coreset, and the kernel function that accounts for all model fidelities as a means to enforce a weighted log-likelihood.
 
-Akin to coresets, the concept of `graph coarsening' is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
-In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
+% Akin to coresets, the concept of `graph coarsening' is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
+% In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
 
-While these techniques do not directly relate to the workings or performance of our proposed method relying on the non-parametric version of the SVGD method, they serve as useful guiding principles to improve practical implementations which typically rely on random particle subsampling for efficient kernel computations. 
+% While these techniques do not directly relate to the workings or performance of our proposed method relying on the non-parametric version of the SVGD method, they serve as useful guiding principles to improve practical implementations which typically rely on random particle subsampling for efficient kernel computations. 
 
-A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. 
-Then, deploying a multistep predictor-corrector method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step for some or all particles via the high-fidelity likelihood i.e. the fidelity assignment \emph{alternates} rather than preceding or following the model updates .
-The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down in implementations. 
-However, determination of `when to correct, what to correct' is also a non-trivial problem.
+% A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. 
+% Then, deploying a multistep predictor-corrector method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step for some or all particles via the high-fidelity likelihood i.e. the fidelity assignment \emph{alternates} rather than preceding or following the model updates .
+% The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down in implementations. 
+% However, determination of `when to correct, what to correct' is also a non-trivial problem.
 
-In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
+% In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
 
 \subsection{Particle assignment to various fidelities}
 
@@ -547,14 +544,18 @@ It is of particular importance to ensure that the cost of pairwise distance comp
 
 \section{Results}
 
-\subsection{Posterior Approximation in High Dimensions}
+\subsection{Convergence of Single Level MF-SVGD}
+
+\subsection{Convergence of Nested MF-SVGD}
+
+\subsection{Optimal Experimental Design via MF-SVGD Bayesian Inference}
 
 
-\subsection{Generalizing Compressed Representations to Higher Particle Counts}
-We consider the case where the original inference is performed on a small set of $N$ particles, but density estimation may be desired with additional particles at test time. 
-Then we need the ability to perform rapid approximation of positions for $K$ new particles introduced at test time. 
-This would require $\Mycomb[(N+K)]{2} - \Mycomb[N]{2} = \frac{1}{2}(K^2 + 2NK - K)$ additional distance calculations and $K$ potentially expensive likelihood computations followed by density estimation in the naive setting. 
-By contrast, a trained parametric simulator that 1. is `discretization invariant' in some sense by capturing the key relationships between existing particles 2. can allocate a large fraction of particles to one or more lower-fidelity models can rapidly convert these to high-quality posterior samples.
+% \subsection{Generalizing Compressed Representations to Higher Particle Counts}
+% We consider the case where the original inference is performed on a small set of $N$ particles, but density estimation may be desired with additional particles at test time. 
+% Then we need the ability to perform rapid approximation of positions for $K$ new particles introduced at test time. 
+% This would require $\Mycomb[(N+K)]{2} - \Mycomb[N]{2} = \frac{1}{2}(K^2 + 2NK - K)$ additional distance calculations and $K$ potentially expensive likelihood computations followed by density estimation in the naive setting. 
+% By contrast, a trained parametric simulator that 1. is `discretization invariant' in some sense by capturing the key relationships between existing particles 2. can allocate a large fraction of particles to one or more lower-fidelity models can rapidly convert these to high-quality posterior samples.
 
 \subsection{}
 
