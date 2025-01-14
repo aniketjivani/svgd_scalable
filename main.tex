@@ -1,6 +1,43 @@
-\documentclass[12pt]{article}
-\usepackage{graphicx} % Required for inserting images
-\usepackage[utf8]{inputenc}
+% SIAM Article Template
+\documentclass[review,onefignum,onetabnum]{siamonline171218}
+
+% Information that is shared between the article and the supplement
+% (title and author information, macros, packages, etc.) goes into
+% ex_shared.tex. If there is no supplement, this file can be included
+% directly.
+
+\input{ex_shared}
+
+% Optional PDF information
+\ifpdf
+\hypersetup{
+  pdftitle={An Example Article},
+  pdfauthor={D. Doe, P. T. Frank, and J. E. Smith}
+}
+\fi
+
+% The next statement enables references to information in the
+% supplement. See the xr-hyperref package for details.
+
+%% Use \myexternaldocument on Overleaf
+% \myexternaldocument{ex_supplement}
+
+% FundRef data to be entered by SIAM
+%<funding-group>
+%<award-group>
+%<funding-source>
+%<named-content content-type="funder-name"> 
+%</named-content> 
+%<named-content content-type="funder-identifier"> 
+%</named-content>
+%</funding-source>
+%<award-id> </award-id>
+%</award-group>
+%</funding-group>
+
+% \documentclass[12pt]{article}
+% \usepackage{graphicx} % Required for inserting images
+% \usepackage[utf8]{inputenc}
 
 \usepackage{hyperref}
 \usepackage{xcolor}
@@ -16,56 +53,37 @@
 \usepackage{float}
 \usepackage{url}
 \usepackage{tabularx}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{amssymb}
+% \usepackage{amsmath}
+% \usepackage{amsfonts}
+% \usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{xurl}
 \usepackage{lineno}
-\usepackage{amsthm}
+% \usepackage{amsthm}
 \usepackage{epsfig}
-\usepackage[linesnumbered, ruled]{algorithm2e}
+% \usepackage[linesnumbered, ruled]{algorithm2e}
 
 \usepackage{ulem}
 \newcommand{\stkout}[1]{\ifmmode\text{\sout{\ensuremath{#1}}}\else\sout{#1}\fi}
-
 \usepackage{multirow}
 \usepackage{longtable}
 \setlength\LTleft{0pt}
 \usepackage{tabularx}
-
-\usepackage{graphicx}
 % \setlength\LTleft{0pt}
-
-
 % \bibliographystyle{unsrt}
-\bibliographystyle{agu}
+% \bibliographystyle{agu}
 % \bibliographystyle{plainnat}
+\usepackage{epsfig}
+% \usepackage[linesnumbered, ruled]{algorithm2e}
+% \usepackage{natbib}
+% \usepackage{color}
+%
+% \clearpage{}%
 
 \newcommand\prob{\mathbb{P}}
 
-
-%
-\usepackage{epsfig}
-\usepackage[linesnumbered, ruled]{algorithm2e}
-
-\usepackage{natbib}
-\usepackage{color}
-
-%
-%
-%
-
-\usepackage{multirow}
-\usepackage{longtable}
-\setlength\LTleft{0pt}
-\usepackage{tabularx}
-%
-\clearpage{}%
-
-
 \newcommand{\xh}[1]{\textcolor{orange}{\textbf{(xh:)} #1}}
-
+\newcommand{\tc}[1]{\textcolor{red}{\textbf{(tc:)} #1}}
 \newcommand{\aj}[1]{\textcolor{magenta}{\textbf{(aj:)} #1}}
 
 %
@@ -330,7 +348,7 @@
 \newcommand{\me}{\,{\scriptstyle -}\!\!=}
 \newcommand{\Var}{\textrm{Var}}
 \newcommand{\Cov}{\textrm{Cov}}
-\newcommand{\diag}{\textrm{diag}}
+% \newcommand{\diag}{\textrm{diag}}
 
 \newcommand{\etal}{\textit{et al.}}
 
@@ -348,37 +366,34 @@
 \newcommand{\Rs}{R$_{\odot}$}
 
 
-\usepackage{algorithmic}
+% \usepackage{algorithmic}
 % \usepackage{algpseudocode}
-
-
-
 \linenumbers
 
-\title{Scalable Stein Variational Gradient Descent via Nested Multifidelity Transport}
-\author{Aniket Jivani, Thomas Coons, Xun Huan}
-\date{\today}
+% \title{Scalable Stein Variational Gradient Descent via Nested Multifidelity Transport}
+% \author{Aniket Jivani, Thomas Coons, Xun Huan}
+% \date{\today}
 
 \begin{document}
-
 \maketitle
-\section*{Abstract}
-Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators.
-These operators have since found application in a number of problems in hypothesis testing, information theory, optimal transport and inference 
-% (see \url{https://sites.google.com/site/steinsmethod} for the rapidly growing body of literature). 
-A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
-Similar to other Bayesian inference methods, SVGD too struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible.
-% In this work, we begin by characterizing the exact trade-offs of Stein's method for different algorithmic choices. 
-In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the kernel evaluations based on the neighbourhood size of each particle, followed by a second partitioning for the high-fidelity likelihood update.
-These advancements greatly accelerate the overall convergence of the SVGD algorithm, and facilitate Bayesian inference as well as stochastic optimization for expensive high-fidelity models in particular.
+
+\begin{abstract}
+Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. Various advancements in algorithms leveraging Stein operators have since found application in problems in hypothesis testing, information theory, optimal transport and inference. A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. This is essentially non-parametric variational inference that is capable of approximating complex posterior distributions. However, SVGD struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the kernel evaluations based on the neighbourhood size of each particle, followed by a second partitioning for the high-fidelity likelihood update. These advancements greatly accelerate the overall convergence of the SVGD algorithm, and facilitate Bayesian inference as well as stochastic optimization for expensive high-fidelity models in particular.
+\end{abstract}
 % We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
 
 
+\begin{keywords}
+  example, \LaTeX
+\end{keywords}
+
+% % REQUIRED
+% \begin{AMS}
+%   68Q25, 68R10, 68U05
+% \end{AMS}
 
 
 \section{Introduction}
-
-
 
 \section{Related Work}
 
@@ -427,7 +442,8 @@ where
 \end{equation}
 
 While this framework does on the surface, construct an update equation based on multiple models, it comes with its fair share of drawbacks: for one, it requires us to propose an adequate estimator for $L_{\Delta}$, followed by a design for pilot samples to correlate the two models and a formal accounting of the bias introduced by this correction. 
-A simpler strategy is to assign model fidelities to individual particles, and modify the update algorithm suitably to target cost savings via strategic querying of high-fidelity model updates. While not quite used for Bayesian inference, similar ideas have found traction in the field of rare event estimation \cite{dhulipala_bayesian_2022}, where the objective is to use the uncertainty from low-fidelity model outputs as an indicator of proximity of particles to the failure boundary. Following this, the limit state function can be computed through the higher-fidelity model and sample the boundary efficiently.
+A viable strategy is to allocate model fidelities to individual particles, and construct an unbiased estimator of the gradient flow to target cost savings via limited and strategic querying of high-fidelity model / likelihood updates. 
+% While not quite used for Bayesian inference, similar ideas have found traction in the field of rare event estimation \cite{dhulipala_bayesian_2022}, where the objective is to use the uncertainty from low-fidelity model outputs as an indicator of proximity of particles to the failure boundary. Following this, the limit state function can be computed through the higher-fidelity model and sample the boundary efficiently.
 
 \subsection{Generalized Multifidelity SVGD}
 
@@ -509,19 +525,19 @@ The above formulation continues to allow flexibility with regards to the specifi
 
 \subsection{Particle assignment to various fidelities}
 
-\emph{Method 0: Non-randomized Assignment}
-The simplest possible setting does not attempt to reassign particles, instead, at every iteration, a fixed proportion of the particles is treated as the lower-fidelity likelihood update while the remaining are high-fidelity updates. 
-We look at the number of iterations required for convergence by monitoring the hyperparameters of the kernel function.
+% \emph{Method 0: Non-randomized Assignment}
+% The simplest possible setting does not attempt to reassign particles, instead, at every iteration, a fixed proportion of the particles is treated as the lower-fidelity likelihood update while the remaining are high-fidelity updates. 
+% We look at the number of iterations required for convergence by monitoring the hyperparameters of the kernel function.
 
-\noindent \emph{Method 1: Randomized Assignment}
-To correct for possible bias due to incorrect particle assignment, randomized assignment shuffles the particles between the different fidelities after one or more update steps.
+% \noindent \emph{Method 1: Randomized Assignment}
+% To correct for possible bias due to incorrect particle assignment, randomized assignment shuffles the particles between the different fidelities after one or more update steps.
 
-\noindent \emph{Method 2: Assignment based on clustering methods}
-For the first time, we consider the setting where a small subset of particles is deemed to be non-redundant and a summarization of the dataset. Here, we incorporate a clustering-based heuristic that determines the high-fidelity particles based on a suitable measure of distance.
-It is of particular importance to ensure that the cost of pairwise distance computations does not grow or outweigh the cost of simpler methods such as randomized assignment i.e. there is possibility of reuse for these when we actually perform the Stein updates.
+% \noindent \emph{Method 2: Assignment based on clustering methods}
+% For the first time, we consider the setting where a small subset of particles is deemed to be non-redundant and a summarization of the dataset. Here, we incorporate a clustering-based heuristic that determines the high-fidelity particles based on a suitable measure of distance.
+% It is of particular importance to ensure that the cost of pairwise distance computations does not grow or outweigh the cost of simpler methods such as randomized assignment i.e. there is possibility of reuse for these when we actually perform the Stein updates.
 
 
-\noindent \emph{Method 3: Resource allocation using model correlations}
+% \noindent \emph{Method 3: Resource allocation using model correlations}
 
 % \subsection{Graph Network Based Propagation}
 % Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
@@ -561,12 +577,16 @@ It is of particular importance to ensure that the cost of pairwise distance comp
 
 \section{Conclusions and Extensions}
 
+\appendix
+\section{An example appendix} 
+\lipsum[71]
 
 
+
+\section*{Acknowledgments}
+
+\bibliographystyle{siamplain}
 \bibliography{local,references}
-
-
-\section*{Appendix}
 
 \end{document}
 
