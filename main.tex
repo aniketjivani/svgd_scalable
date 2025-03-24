@@ -75,7 +75,7 @@
 % \bibliographystyle{plainnat}
 \usepackage{epsfig}
 % \usepackage[linesnumbered, ruled]{algorithm2e}
-% \usepackage{natbib}
+\usepackage{natbib}
 % \usepackage{color}
 %
 % \clearpage{}%
@@ -355,6 +355,7 @@
 % \newcommand{\dkl}
 
 \def\sgn{\mathop{\rm sgn}}
+\def\<#1>{\mathinner{\langle#1\rangle}}
 \newcommand{\argmax}{\operatornamewithlimits{argmax}}
 \newcommand{\argmin}{\operatornamewithlimits{argmin}}
 \newcommand{\DKL}{D_{\mathrm{KL}}}
@@ -378,7 +379,7 @@
 \maketitle
 
 \begin{abstract}
-Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. Various advancements in algorithms leveraging Stein operators have since found application in problems in hypothesis testing, information theory, optimal transport and inference. A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. This is essentially non-parametric variational inference that is capable of approximating complex posterior distributions. However, SVGD struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the kernel evaluations based on the neighbourhood size of each particle, followed by a second partitioning for the high-fidelity likelihood update. These advancements greatly accelerate the overall convergence of the SVGD algorithm, and facilitate Bayesian inference as well as stochastic optimization for expensive high-fidelity models in particular.
+Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. Various advancements in algorithms leveraging Stein operators have since found application in problems in hypothesis testing, information theory, optimal transport and inference. A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. This is essentially non-parametric variational inference that is capable of approximating complex posterior distributions. However, SVGD struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity forward models. The key contribution is a nested multifidelity update that first partitions the kernel evaluations based on the neighbourhood of influence for each particle, followed by a second partitioning for the high-fidelity likelihood update. These advancements greatly accelerate Bayesian inference via SVGD and facilitate stochastic optimization for expensive high-fidelity models in particular.
 \end{abstract}
 % We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
 
@@ -395,7 +396,8 @@ Stein's method was originally developed to approximate moment computations for s
 
 \section{Introduction}
 
-\section{Related Work}
+\section{Background and Related Work}
+
 
 \begin{enumerate}
     \item Spectral Delta Kernels \cite{lazaro-gredilla_sparse_2010}
@@ -416,6 +418,13 @@ Stein's method was originally developed to approximate moment computations for s
 
     \item Sparse Sinkhorn Attention \cite{tay_sparse_2020}
 \end{enumerate}
+\subsection{Stein Variational Gradient Descent}
+
+\subsection{Multifidelity Monte Carlo Methods}
+
+
+\subsection{Bayesian Optimal Experimental Design}
+
 
 \section{Methodology}
 
@@ -555,6 +564,106 @@ The above formulation continues to allow flexibility with regards to the specifi
 
 % \subsection{Particle Swarm Optimization based methods}
 % (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
+\subsection{OT-based Flow Matching}
+
+The generative modeling approach proposed in \cite{tong_improving_2024} generalizes the flow matching framework proposed by \cite{lipman_flow_2023} to use arbitrary transport maps and approximate dynamic Optimal Transport to improve the efficiency of training and inference. Below, we briefly review OT-based conditional flow matching algorithms and motivate their use in learning maps between samples from multiple-fidelity model likelihoods.
+
+A smooth time-varying vector field $u: [0, 1] \times \RR^d \to \RR^d$ is defined by the following ordinary differential equation (ODE):
+\begin{equation}
+    dx = u(t, x)dt
+\end{equation}
+
+Given density $p_0$ over $\RR^d$, if $\phi_t(x)$ is the solution for the above ODE (i.e. it denotes the position of point $x$ transported along $u$ from time $0$ up to time $t$), this integration map introduces a pushforward density $p_t$ ($p_t$ is the density of points $x \sim p_0$ transported along $u$ from time 0 to time $t$) that is characterized by the continuity equation:
+
+\begin{equation}
+    \frac{\partial p}{\partial t} = -\grad.\left(p_t u_t\right)
+\end{equation}
+
+We can characterize the marginal probability path $p_t$ as a mixture of conditional probability paths:
+
+\begin{equation}
+    p_t(x) = \int p_t(x | z) q(z) dz
+\end{equation}
+
+If a path $p_t(x|z)$ is generated from $u_t(x | z)$ from initial conditions $p_0(x | z)$, then the vector field $u_t(x)$ given by:
+
+\begin{equation}
+    u_t(x) = \EE_{q(z)}\left[\frac{u_t(x|z)p_t(x|z)}{p_t(x)}\right]\label{eq: marg_cond_velocity_field}
+\end{equation}
+
+generates probability path $p_t(x)$ from initial conditions $p_0(x)$.
+
+The key ideas behind flow matching rely on this connection between marginal vector fields and marginal probability paths to decompose the intractable marginal vector field into conditional vector fields.
+
+The original flow matching objective considered in \cite{lipman_flow_2023} is intractable for general source density $q_0$ mapping to target $q_1$:
+
+\begin{equation}
+    \CL_{\text{FM}}(\theta)= \EE_{t \sim \mathcal{U}(0, 1), x \sim p_t(x)} ||v_\theta(t, x) - u_t(x)||^2
+\end{equation}
+
+In the special case where the marginal densities $p_t(x) = \CN(x | \mu_t, \sigma_t^2)$ are Gaussian, a possible simple (but non-unique) ODE satisfies:
+
+\begin{equation}
+    \phi_t(x_0) = \mu_t + \sigma_t \left(\frac{x_0 - \mu_0}{\sigma_0}\right) \label{eq: gaussian_ode_sol}
+\end{equation}
+
+and the unique vector field whose integration map satisfies \eqref{eq: gaussian_ode_sol} has the form:
+
+\begin{equation}
+    u_t(x) = \frac{\sigma_t'}{\sigma_t} (x - \mu_t) + \mu_t'
+\end{equation}
+
+where $\sigma_t'$ and $\mu_t'$ denote the time derivatives of $\sigma_t$ and $\mu_t$ respectively, and the vector field $u$ with initial conditions $\CN(\mu_0, \sigma_0^2)$ generates the Gaussian probability path $p_t(x) = \CN(x | \mu_t, \sigma_t^2)$.
+
+The flow matching loss under assumptions of existence and exchange of different integrals, and boundedness of the solution fields can be switched out for an easier-to-regress conditional flow matching loss with the loss gradient only changing by a constant factor that is independent of $\theta$:
+
+\begin{equation}
+    \CL_{\text{CFM}}(\theta) = \EE_{t, q(z), p_t(x|z)}||v_\theta(t, x) - u_t(x|z)||^2 \label{eq: cfm_loss}
+\end{equation}
+
+For all practical purposes, we can solve the much more useful CFM objective, under the condition that we can:
+
+\begin{enumerate}
+    \item Sample from $q(z)$
+
+    \item Sample from $p_t(x|z)$
+
+    \item Calculate $u_t(x|z)$
+\end{enumerate}
+
+\begin{equation}
+    \nabla_{\theta}\CL_{\text{FM}}(\theta) =\nabla_{\theta}\CL_{\text{CFM}}(\theta) \label{eq: cfm_fm_grad}
+\end{equation}
+
+A short proof of this is provided below from \cite{tong_improving_2024}:
+
+\begin{align*}
+    \grad_{\theta}\EE_{p_t(x)}||v_\theta(t, x) - u_t(x)||^2 &= \grad_\theta \EE_{p_t(x)}(||v_\theta(t, x)||^2 - 2\langle v_\theta(t, x) u_t(x)\rangle) \quad \textcolor{red}{\text{($u_t(x)
+    $ does not depend on $\theta$})}
+\end{align*}
+
+
+\begin{align*}
+    \grad_{\theta}\EE_{q(z),p_t(x|z)}||v_\theta(t, x) - u_t(x, z)||^2 &= \EE_{q(z), p_t(x|z)}\grad_{\theta}(||v_\theta(t, x)||^2 - 2 \langle v_\theta(t, x) , u_t(x|z)\rangle)
+\end{align*}
+
+The first term in each loss function can be reparametrized as:
+\begin{equation*}
+    \EE_{p_t(x)}||v_\theta(t, x)||^2 = \iint ||v_\theta(t, x)||^2 p_t(x|z)q(z)dz dx = \EE_{q(z), p_t(x|z)}||v_\theta(t, x)||^2
+\end{equation*}
+
+while we substitute \eqref{eq: marg_cond_velocity_field} in the inner product expression for FM to recover the CFM inner product and thus equalize the loss gradients:
+
+\begin{align*}
+    \EE_{p_t(x)}\langle v_\theta(t, x), u_t(x)\rangle &= \int \biggl<v_\theta(t, x), \frac{\int u_t(x|z)p_t(x|z)q(z)dz}{p_t(x)}\biggr>p_t(x)dx \\
+    &=\iint \langle v_\theta(t, x), u_t(x|z)\rangle p_t(x|z)q(z)dzdx \quad \textcolor{red}{\text{(inner product distributed over integral argument)}}\\
+    &=\EE_{q(z), p_t(x|z)}\langle v_\theta(t, x) u_t(x | z) \rangle
+\end{align*}
+
+
+
+
+
 
 \subsection{Sparse Kernel Updates}
 
