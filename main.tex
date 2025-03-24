@@ -706,7 +706,9 @@ Then the above solution can be recovered through the marginal vector field $u_t(
 \item $u_t(x|z) = \frac{1 - 2t}{2t(1-t)}\left(x - (tx_1 + (1 - t) x_0) \right) + (x_1 - x_0)$
 \end{enumerate}
 
-
+The ability to establish correlations through reasonably sized pilot datasets may be enhanced through the use of flow matching. 
+In cases where the high-fidelity model can only be evaluated a limited number of times, the flow matching surrogate can enable a fast mapping from the particles propagated under a lower-fidelity model likelihood to those under the highest fidelity likelihood. 
+Moreover, it can be parametrized to use particles based on multiple lower-fidelity models for even greater savings.
 
 
 \subsection{Sparse Kernel Updates}
