@@ -565,9 +565,11 @@ The above formulation continues to allow flexibility with regards to the specifi
 
 % \subsection{Particle Swarm Optimization based methods}
 % (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
-\subsection{OT-based Flow Matching}
+\subsection{Flow Matching}
 
-The generative modeling approach proposed in \cite{tong_improving_2024} generalizes the flow matching framework proposed by \cite{lipman_flow_2023} to use arbitrary transport maps and approximate dynamic Optimal Transport to improve the efficiency of training and inference. Below, we briefly review OT-based conditional flow matching algorithms and motivate their use in learning maps between samples from multiple-fidelity model likelihoods.
+Below, we briefly review the current practice in conditional flow matching algorithms and motivate their use in learning maps between samples from multiple-fidelity model likelihoods.
+
+Generative modeling tasks consider the problem of approximating and sampling from a probability distribution. For instance, continuous normalizing flows (CNFs) proposed in \cite{grathwohl_ffjord_2018} express an invertible mapping between a fixed and tractable source distribution and the data distribution using Neural Ordinary Differential Equations (NODEs). CNFs can be trained and scaled to larger datasets better through a regression of the ODE drift, a so-called Flow Matching (FM) objective. The advances proposed in \cite{tong_improving_2024} generalize the flow matching framework proposed by \cite{lipman_flow_2023} to use transport maps between arbitrary distributions and approximate the dynamic Optimal Transport problem during sampling of conditional paths to improve the efficiency of training and inference. 
 
 A smooth time-varying vector field $u: [0, 1] \times \RR^d \to \RR^d$ is defined by the following ordinary differential equation (ODE):
 \begin{equation}
