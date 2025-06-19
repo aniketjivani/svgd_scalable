@@ -388,8 +388,7 @@ This is essentially non-parametric variational inference that is capable of appr
 In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. 
 In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models. 
 These can take the form of forward models with tractable likelihoods, or tractable density estimation procedures on the high-fidelity model. 
-The key contribution is a nested multifidelity update that first partitions the kernel evaluations based on the neighbourhood of influence for each particle, followed by a second partitioning for evaluation under different likelihood models. 
-These advancements greatly accelerate Bayesian inference via SVGD and facilitate stochastic optimization for expensive high-fidelity models in particular.
+The key contribution is a multifidelity gradient estimator that partitions the incremental transform to enable evaluations under different likelihood models and also optionally partitions the kernel evaluations based on the neighbourhood of influence for each particle. These advancements greatly accelerate Bayesian inference via SVGD and can also be used to propose an estimator for expected information gain that implicitly incorporates multi-fidelity information.
 \end{abstract}
 % We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
 
