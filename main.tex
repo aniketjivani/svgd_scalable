@@ -429,18 +429,39 @@ The key contribution is a multifidelity gradient estimator that partitions the i
 % \end{enumerate}
 \subsection{Stein Variational Gradient Descent}\label{ss: svgd}
 
-Bayesian inference is a rigorous and general framework for reasoning under uncertainty: we construct a full probability model for all observable and unobservable quantities in a problem, followed by conditioning on the observed data to characterize the posterior distribution for the unobserved quantities. 
+Bayesian inference is a rigorous and general framework for reasoning under uncertainty: we construct a full probability model for all observable and unobservable quantities in a problem, followed by conditioning on the observed data to characterize the posterior distribution for the unobserved quantities. We provide a brief description below:
 
-Markov Chain Monte Carlo (MCMC) methods are considered a workhorse of modern statistical inference. 
-These work by generating a sequence of random samples through construction of a Markov chain whose equilibrium distribution is the target posterior distribution. 
+Let $\theta$ denote an unobservable quantity or parameter, and $D$ denote data or \textit{observations} collected through experiments or simulations. In order to estimate $\theta$, we define and decompose a joint probability distribution on $\theta$ and $D$ as follows:
+\begin{align}
+    p(\theta, D) = \underbrace{p(\theta)}_{\text{prior}} \underbrace{p(D\mid\theta)}_{\text{likelihood}}
+\end{align}
+
+The object of interest in Bayesian inference is the ``posterior density'' $p(\theta \mid D)$, which is the updated uncertainty for the unknown parameters conditioned on the newly acquired observations. It is obtained through the re-arrangement of the various conditional probabilities and summarized via Bayes' theorem:
+
+\begin{align}
+    p(\theta \mid D) = \frac{p(D\mid\theta) \, p(\theta)}{p(D)},
+    \label{eqn: bayes_rule_v1}
+\end{align}
+
+where $p(D)$ is the evidence or marginal likelihood, and often intractable quantity that acts as a normalizing constant on the often tractable likelihood and prior.
+
+As far as inference techniques go, Markov Chain Monte Carlo (MCMC) methods are considered a workhorse of modern statistical inference. 
+The high-level idea is to generate a sequence of random samples through construction of a Markov chain whose equilibrium distribution is the target posterior distribution. 
 In addition to sampling from arbitrary distribution families, it also has the key benefit of asymptotic convergence guarantees. 
-However, these are computationally intensive when dealing with high-dimensional parameter spaces, despite impressive algorithmic advancements that make use of gradient information to guide new proposals.
+However, these are computationally intensive when dealing with high-dimensional parameter spaces, despite some impressive algorithmic advancements that make use of gradient information to guide new proposals.
 
-Variational Inference (VI) reformulates traditional Bayesian inference as an optimization problem, where the posterior is approximated by a parametric family of distributions that is closest to the true posterior through a suitable measure, typically the reverse KL divergence. While VI is much more scalable to higher-dimensional spaces compared to MCMC, its approximation capacity can often be constrained by the choice of the variational family, which may be non-trivial to pin down. 
+Variational Inference (VI) reformulates traditional Bayesian inference as an optimization problem, where the posterior is approximated by a parametric family of distributions that is closest to the true posterior through a suitable measure. This is usually the reverse KL divergence or other measures from the family of $f$-divergence between probabiliy distributions. 
+While VI is much more scalable to higher-dimensional spaces compared to MCMC, this scalability often trades off its approximation capacity, which is constrained by the choice of the variational family. 
+For instance, mean-field variational Bayes assumes factorization of the variational distribution into independent variational approximations over each latent variable. 
+However, dependencies between the hidden variables mean that this family typically does not contain the true posterior distribution. 
+In general, VI can result in biased approximations to the posterior.
 
 
 Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
-Rather than restricting the set of transforms $T$ through a certain parametric form, it is instead applied incrementally to propagate an initial set of particles drawn from $q_0$, with each transform directed towards steepest rate of change of KL divergence. Here, the connection between the Langevin-Stein operator and the KL divergence metric is exploited to result in an interpretable and simple inference procedure. While this is of course, sensitive to choices of initial conditions and optimization methods used to find the fixed point, 
+Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
+Here, the connection between the Langevin-Stein operator and the KL divergence metric is exploited to result in an interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization.
+
+While the procedure is naturally sensitive to choices of initial conditions and optimization methods used to find the fixed point, it can be used to characterize complex posterior distributions and is easily parallelizable.
 
 Vanilla SVGD takes as input the target density function $p(x)$ and a set of initial particles $\{x_i^0\}_{i=1}^{n} \sim q_0(x)$ and returns a set of particles $\{x_i^L\}_{i=1}^{n}$ after L iterations that approximates the target distribution.
 
@@ -462,11 +483,11 @@ Generally, there are two major costs associated with performing SVGD, namely:
     \item The $O(n^2)$ cost associated with computing elements $k(x_i, x_j)$ of the dense kernel matrix.
 \end{enumerate}
 
-The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of special covariance structures as the map is iteratively constructed. One simple example is propagating an initial set of particles towards a bimodal target density. 
+The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
 
-Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. 
+One simple example is propagating an initial set of particles towards a bimodal target density. 
+Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and sparsity in the covariance matrix. 
 
-This introduces some structure and sparsity in the covariance matrix. 
 Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
 
 However, we will initially focus on efficient evaluation of the score function first through multi-fidelity setups, before considering a potential combination of the kernel approximation and score approximation ideas.
@@ -535,20 +556,28 @@ where $G \in \RR^{M\times M}$ is matrix that depends on $\CA$ and the exact samp
 
 We also briefly note that there are alternative sampling-based estimators beyond the ACV formulation above. The multilevel best linear unbiased (MLBLUE) estimator from \cite{schaden_multilevel_2020} uses an linear-matrix formulation that 
 %also uses a linear combination of correlated MC estimators and 
-can produce impressive variance reduction like ACV. More recently, the generalized linear grouped ACV estimator (GACV), the most general multi-fidelity estimator to date, was introduced in \cite{gorodetsky_grouped_2024}. This estimator consists of a linear combination of unbiased estimators, no longer limited to MC estimators, and ACV and MLBLUE can be shown to be special cases of GACV. All such multi-fidelity sampling-based estimators are similarly parameterized by a vector of weights and a sample allocation, although these exact parameterizations and their dimensions may differ across estimators. While MLBLUE and GACV are competitive with and can outperform ACV in some cases, we nonetheless use ACV in this work since potential performance improvements may be marginal relative to the issue of optimal pilot sampling. Importantly, the issue of covariance estimation still applies to these other estimators, and the pilot sampling termination algorithm presented in this paper can be applied to these other estimators by replacing the above variance formulae with their corresponding equations from \cite{gorodetsky_grouped_2024}.
+can produce impressive variance reduction like ACV. More recently, the generalized linear grouped ACV estimator (GACV), the most general multi-fidelity estimator to date, was introduced in \cite{gorodetsky_grouped_2024}. 
+This estimator consists of a linear combination of unbiased estimators, no longer limited to MC estimators, and ACV and MLBLUE can be shown to be special cases of GACV. All such multi-fidelity sampling-based estimators are similarly parameterized by a vector of weights and a sample allocation, although these exact parameterizations and their dimensions may differ across estimators. 
+% While MLBLUE and GACV are competitive with and can outperform ACV in some cases, we nonetheless use ACV in this work since potential performance improvements may be marginal relative to the issue of optimal pilot sampling. Importantly, the issue of covariance estimation still applies to these other estimators, and the pilot sampling termination algorithm presented in this paper can be applied to these other estimators by replacing the above variance formulae with their corresponding equations from \cite{gorodetsky_grouped_2024}.
 
 \subsection{Bayesian Optimal Experimental Design}
 
 
 \section{Methodology}
 
-\subsection{Bifidelity Model / Surrogate SVGD}
+We begin with the assumption that we have access to a black-box model ensemble $f_i(Z)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $Z \in \RR^{n_z}$ is a random vector.
 
-Consider high-fidelity and low-fidelity models with their corresponding log-likelihoods:
+
+
+\subsection{Baseline: Bifidelity SVGD}
+
+
+
+
 
 \begin{align}
- L_0 &= \log p(y_0 | x, \theta) = \sum_{i=1}^{N} \log p(y_0^i | x, \theta) \\
- L_1 &= \log p(y_1 | x, \theta) = \sum_{i=1}^{N} \log p(y_1^i | x, \theta)
+ L_0 &= \log p(y_0 | x, \theta)\\
+ L_1 &= \log p(y_1 | x, \theta)
 \end{align}
 
 
