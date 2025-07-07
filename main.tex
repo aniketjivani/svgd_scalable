@@ -486,7 +486,9 @@ Generally, there are two major costs associated with performing SVGD, namely:
 The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
 
 One simple example is propagating an initial set of particles towards a bimodal target density. 
-Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and sparsity in the covariance matrix. 
+Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and potentially sparsity in the covariance matrix. 
+
+
 
 Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
 
@@ -501,9 +503,19 @@ Consider a mapping $Q=f_0(Z)$ that relates the random vector $Z \in \mathbb{R}^{
     \mathbb{E}\left[Q_0\right] 
     \approx \hat{Q}_0 := \frac{1}{N} \sum^{N}_{j=1}f_0(z^{(j)}),
 \end{align}
+
 where $z^{(j)} \sim p(Z)$ are independent and identically distributed (i.i.d.) samples drawn from the probability distribution of $Z$. The MC estimator $\hat{Q}$ is unbiased, making its estimator error contributed entirely by its variance $N^{-1}\Var[Q]$. When using computationally intensive models, the number of samples $N$ that can be afforded may not be sufficiently high to limit this variance.
 
-To reduce the estimator variance, multi-fidelity methods leverage an ensemble of low-fidelity models whose outputs are correlated with the high-fidelity model of interest but with diminished costs. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} is one such method that has been shown to produce impressive variance reduction in a variety of scenarios. This method introduces $M$ auxiliary random variables $Q_{m}$ for $m=1,\ldots,M$ that are outputs of the corresponding (e.g., low-fidelity) models $Q_{m} =f_{m}(Z)$, then combines the corresponding MC estimates of each low-fidelity model, $\hat{Q}_{m}$, into a single estimator. The ACV estimator, which we denote $\tilde{Q}$, can be written as:
+To reduce the estimator variance, multi-fidelity methods leverage an ensemble of low-fidelity models whose outputs are correlated with the high-fidelity model of interest but with diminished costs. 
+
+Control variates (CVs) are a widely used classical method used as a variance reduction technique for Monte-Carlo methods. 
+The general approach is to identify another function $f_1$, such that the traditional expected value estimator described in \autoref{eqn:mc} can be replaced by one constructed with $f_0 - f_1$, with smaller variance. The function $f_1$ is then referred to as a control variate. 
+Typically, selection of $f_1$ and identifying a rich set of candidate CVs is a non-trivial procedure barring the exceptions where CVs can be identified from domain knowledge. 
+Over the years, linear transformations of the score function have been a popular choice given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods that leverage gradient information \citep{papamarkou_zero_2014}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators.
+
+
+In the context of multifidelity methods however, we typically already have access to a hierarcy of models, where each available low-fidelity model can be leveraged as a control variate. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving estimators in this setting.
+This method introduces $M$ auxiliary random variables $Q_{m}$ for $m=1,\ldots,M$ that are outputs of the corresponding (e.g., low-fidelity) models $Q_{m} =f_{m}(Z)$, then combines the corresponding MC estimates of each low-fidelity model, $\hat{Q}_{m}$, into a single estimator. The ACV estimator, which we denote $\tilde{Q}$, can be written as:
 \begin{align}
         \Tilde{Q}(z,\alpha,\CA) &:= 
         \hat{Q}_{0}(z_{0})+\sum^{M}_{m=1}\alpha_{m}\left( \hat{Q}_{m}(z^{\ast}_{m})-\hat{\mu}_{m}(z_{m}) \right) \nonumber\\ 
@@ -554,159 +566,16 @@ where $G \in \RR^{M\times M}$ is matrix that depends on $\CA$ and the exact samp
 
 
 
-We also briefly note that there are alternative sampling-based estimators beyond the ACV formulation above. The multilevel best linear unbiased (MLBLUE) estimator from \cite{schaden_multilevel_2020} uses an linear-matrix formulation that 
-%also uses a linear combination of correlated MC estimators and 
-can produce impressive variance reduction like ACV. More recently, the generalized linear grouped ACV estimator (GACV), the most general multi-fidelity estimator to date, was introduced in \cite{gorodetsky_grouped_2024}. 
-This estimator consists of a linear combination of unbiased estimators, no longer limited to MC estimators, and ACV and MLBLUE can be shown to be special cases of GACV. All such multi-fidelity sampling-based estimators are similarly parameterized by a vector of weights and a sample allocation, although these exact parameterizations and their dimensions may differ across estimators. 
+Alternative sampling-based estimators beyond the ACV formulation above, such as the multilevel best linear unbiased (MLBLUE) estimator from \cite{schaden_multilevel_2020} 
+can produce impressive variance reduction like ACV. 
+In fact, the generalized linear grouped ACV estimator (GACV) \cite{gorodetsky_grouped_2024} generalizes these methods. Though exact parametrizations may differ across estimators, they share common features of estimator weights and sample allocations.
+
 % While MLBLUE and GACV are competitive with and can outperform ACV in some cases, we nonetheless use ACV in this work since potential performance improvements may be marginal relative to the issue of optimal pilot sampling. Importantly, the issue of covariance estimation still applies to these other estimators, and the pilot sampling termination algorithm presented in this paper can be applied to these other estimators by replacing the above variance formulae with their corresponding equations from \cite{gorodetsky_grouped_2024}.
 
 \subsection{Bayesian Optimal Experimental Design}
 
 
-\section{Methodology}
 
-We begin with the assumption that we have access to a black-box model ensemble $f_i(Z)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $Z \in \RR^{n_z}$ is a random vector.
-
-
-
-\subsection{Baseline: Bifidelity SVGD}
-
-
-
-
-
-\begin{align}
- L_0 &= \log p(y_0 | x, \theta)\\
- L_1 &= \log p(y_1 | x, \theta)
-\end{align}
-
-
-Then assuming an additive correction, a simple Stein update for the parameters $\theta_i$ would become:
-
-\begin{equation}
-    \theta_i \leftarrow \theta_i + \epsilon \phi^{\ast}(\theta)
-\end{equation}
-
-where 
-
-\begin{equation}
-    \phi^{\ast}(\theta) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta) \grad_{\theta_j}[(L_{1}(\theta_j) + L_{\Delta}(\theta_j) + \log p(\theta)] + \grad_{\theta_j} k(\theta_j, \theta)]
-\end{equation}
-
-While this framework does on the surface, construct an update equation based on multiple models, it comes with its fair share of drawbacks: for one, it requires us to propose an adequate estimator for $L_{\Delta}$, followed by a design for pilot samples to correlate the two models and a formal accounting of the bias introduced by this correction. 
-A viable strategy is to allocate model fidelities to individual particles, and construct an unbiased estimator of the gradient flow to target cost savings via limited and strategic querying of high-fidelity model / likelihood updates. 
-% While not quite used for Bayesian inference, similar ideas have found traction in the field of rare event estimation \cite{dhulipala_bayesian_2022}, where the objective is to use the uncertainty from low-fidelity model outputs as an indicator of proximity of particles to the failure boundary. Following this, the limit state function can be computed through the higher-fidelity model and sample the boundary efficiently.
-
-\subsection{Generalized Multifidelity SVGD}
-
-We treat the Stein update functions as scalar QoIs. Then the high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
-
-\begin{equation*}
-    \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
-\end{equation*}
-
-And similarly, for lower-fidelity models indexed from $1$ to $m$, we can compute the particle positions as:
-
-\begin{equation*}
-    \theta^{(l)}_i \leftarrow \theta^{(l)}_i + \epsilon \phi^{\ast}(\theta^{(l)}), \quad l=1, \cdots, m
-\end{equation*}
-
-where
-
-\begin{align}
-    \phi^{\ast}(\theta^{(0)}) &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{0} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
-    &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
-    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{0} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
-\end{align}
-
-\begin{align}
-    \phi^{\ast}(\theta^{(l)}) &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
-    &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber \\
-    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \log p(\theta_j)]] + \grad_{\theta_j} k(\theta_j, \theta) \nonumber \\ 
-    &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
-    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
-\end{align}
-
-While the $M$ particles are allocated to different models as $M_0, M_1, \cdots, M_m$, the above updates still use all the particles to compute the map at each iteration - this introduces interactions between the multifidelity particles in \stkout{\emph{both} terms of the update: the first term driving the particles to regions of high-probability} \textcolor{red}{(unfortunately, this is not true. When you cut off the kernel matrix to remove the particle interactions amongst the other fidelities, it turns out that only the particle distances corresponding to that fidelity weigh the likelihood)} the second term of the update accounting for the repulsive force that prevents particle collapse into local modes. 
-The repulsive force i.e. the kernel gradient evaluates a shared kernel function over different subsets of $\theta$ in each term, while the force driving particles towards high-probability regions weighs the kernel function by the individual log-likelihoods.
-\textcolor{red}{Interestingly, another algorithmic choice here is the choice of particle positions to use in a given fidelity's updates. For example, if we updated the low-fidelity particle's positions first, these updates could be transmitted to and used by the high fidelity update mechanism in the same step instead of both updates using previously computed positions.}
-
-The above formulation continues to allow flexibility with regards to the specification and the number of lower-fidelity model; but it also raises additional open questions regarding the following aspects:
-
-\begin{enumerate}
-    \item The choice of the kernel function for individual model fidelities
-
-    \item The allocation of particles to different model fidelities (disjoint / overlapping) and how it changes as we step through the method.
-
-    \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
-
-    \item The frequency of updates to particles of different fidelities, and the update sharing frequency within a single iteration of the outer loop.
-
-    \item The stopping criterion that assesses convergence to the target distribution.
-
-    \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
-\end{enumerate}
-
-% \subsection{KL-Divergence Based Correction with kNN Estimator}
-
-
-
-
-
-% Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
-% There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of the need to process very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
-
-% A prominent line of work that deals with the first case uses the so-called `consensus Monte Carlo methods' \citep{rabinovich_variational_2015,scott_bayes_2016}. Here a data sharding (partitioning) step is followed by independent posterior sampling on multiple machines conditioned on the data partitions. 
-% The communication overhead is avoided by combining the posterior draws to form a `consensus' belief about the model unknowns.
-% The algorithm is exact for Gaussian posteriors, but has been found to be broadly useful for non-Gaussian settings too.
-
-% Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
-% Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods. A superficial analogy we can draw is the treatment of the high-fidelity particles as our coreset, and the kernel function that accounts for all model fidelities as a means to enforce a weighted log-likelihood.
-
-% Akin to coresets, the concept of `graph coarsening' is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
-% In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
-
-% While these techniques do not directly relate to the workings or performance of our proposed method relying on the non-parametric version of the SVGD method, they serve as useful guiding principles to improve practical implementations which typically rely on random particle subsampling for efficient kernel computations. 
-
-% A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. 
-% Then, deploying a multistep predictor-corrector method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step for some or all particles via the high-fidelity likelihood i.e. the fidelity assignment \emph{alternates} rather than preceding or following the model updates .
-% The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down in implementations. 
-% However, determination of `when to correct, what to correct' is also a non-trivial problem.
-
-% In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
-
-\subsection{Particle assignment to various fidelities}
-
-% \emph{Method 0: Non-randomized Assignment}
-% The simplest possible setting does not attempt to reassign particles, instead, at every iteration, a fixed proportion of the particles is treated as the lower-fidelity likelihood update while the remaining are high-fidelity updates. 
-% We look at the number of iterations required for convergence by monitoring the hyperparameters of the kernel function.
-
-% \noindent \emph{Method 1: Randomized Assignment}
-% To correct for possible bias due to incorrect particle assignment, randomized assignment shuffles the particles between the different fidelities after one or more update steps.
-
-% \noindent \emph{Method 2: Assignment based on clustering methods}
-% For the first time, we consider the setting where a small subset of particles is deemed to be non-redundant and a summarization of the dataset. Here, we incorporate a clustering-based heuristic that determines the high-fidelity particles based on a suitable measure of distance.
-% It is of particular importance to ensure that the cost of pairwise distance computations does not grow or outweigh the cost of simpler methods such as randomized assignment i.e. there is possibility of reuse for these when we actually perform the Stein updates.
-
-
-% \noindent \emph{Method 3: Resource allocation using model correlations}
-
-% \subsection{Graph Network Based Propagation}
-% Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
-
-% GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
-% The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear activations results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph as the output. 
-
-% Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
-% This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
-
-% Without additional constraints however, a GN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
-% It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
-% However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
-% We begin with a brief overview of our proposed changes below:
-
-% \subsection{Particle Swarm Optimization based methods}
-% (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
 \subsection{Flow Matching}
 
 Below, we briefly review the current practice in conditional flow matching algorithms and motivate their use in learning maps between samples from multiple-fidelity model likelihoods.
@@ -851,6 +720,199 @@ Then the above solution can be recovered through the marginal vector field $u_t(
 The ability to establish correlations through reasonably sized pilot datasets may be enhanced through the use of flow matching. 
 In cases where the high-fidelity model can only be evaluated a limited number of times, the flow matching surrogate can enable a fast mapping from the particles propagated under a lower-fidelity model likelihood to those under the highest fidelity likelihood. 
 Moreover, it can be parametrized to use particles based on multiple lower-fidelity models for even greater savings.
+
+\section{Methodology}
+
+We begin with the assumption that we have access to a black-box model ensemble $f_i(\theta)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $\theta \in \RR^{n_\theta}$ is a random vector.
+
+% Let $y_0$ and $y_1$ be observations 
+
+
+% \begin{equation}
+%     y_i^{(j)} = f_i(\theta)^{(j)} + \varepsilon_i
+%     \label{eq: dgp_fid}
+% \end{equation}
+
+% where \varepsilon is homoskedastic noise associated with  
+
+Then, the log-likelihood functions corresponding to these outputs can be expressed as:
+
+\begin{align}
+ L_i = \log p(f_i | \theta)
+ \label{eq: lik_fid}
+\end{align}
+
+The score function for the target density then simplifies to the following, where the normalizing constant vanishes because it is independent of the model parameters:
+
+\begin{align}
+    \nabla_{\theta} \log p_i(\theta \mid D) = L_i \log(p(\theta)),
+    \label{eqn: bayes_rule_score}
+\end{align}
+
+\subsection{Baseline: Bifidelity SVGD}
+
+
+% Then assuming an additive correction, a simple Stein update for the parameters $\theta_i$ would become:
+
+Before we propose the multi-fidelity construction It is is still instructive to demonstrate the basic idea of partitioning the likelihood evaluation costs through a bifidelity surrogate SVGD construction, where a subset of particles evaluated under the lower-fidelity target density are `corrected' through the corresponding high-fidelity density gradient update.
+
+Let $n_0$ be the number of particles that are updated under both high and low-fidelity likelihood models. Let $n_1$ represent the number of particles updated only under the low-fidelity representation.
+
+Then the new updates take the form:
+\begin{align}
+    x_i^{l + 1} &\leftarrow x_i^l + \epsilon_l\hat{\phi}^{\ast}_{\text{BF}}(x_i^l)
+    \label{eq: bf_svgd_basic}
+\end{align}
+
+where:
+\begin{align}
+    \hat{\phi}^{\ast}_{\text{BF}}(x) &= \frac{1}{n_1}\left[\sum_{j=1}^{n_1} k(x_j^l, x) \nabla_{x_j^l}\log p_1(x_j^l) + \nabla_{x_j^l}k(x_j^l, x)\right]
+    + \frac{1}{n_0}\left[\sum_{j=1}^{n_0} k(x_j^l, x) \nabla_{x_j^l}\log \left(\frac{p_0(x_j^l)}{p_1(x_j^l)}\right)\right]
+    \label{eq:bf_gradient_expr}
+\end{align}
+
+The additive correction can be learnt either for a single subset of initial particles that does not change during the transport process or subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
+
+We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
+
+
+
+
+To evaluate the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
+
+
+
+
+
+
+
+
+
+
+% \begin{equation}
+%     \theta_i \leftarrow \theta_i + \epsilon \phi^{\ast}(\theta)
+% \end{equation}
+
+% where 
+
+% \begin{equation}
+%     \phi^{\ast}(\theta) = \frac{1}{M}\sum_{j=1}^{M}[k(\theta_j, \theta) \grad_{\theta_j}[(L_{1}(\theta_j) + L_{\Delta}(\theta_j) + \log p(\theta)] + \grad_{\theta_j} k(\theta_j, \theta)]
+% \end{equation}
+
+% While this framework does on the surface, construct an update equation based on multiple models, it comes with its fair share of drawbacks: for one, it requires us to propose an adequate estimator for $L_{\Delta}$, followed by a design for pilot samples to correlate the two models and a formal accounting of the bias introduced by this correction. 
+% A viable strategy is to allocate model fidelities to individual particles, and construct an unbiased estimator of the gradient flow to target cost savings via limited and strategic querying of high-fidelity model / likelihood updates. 
+% While not quite used for Bayesian inference, similar ideas have found traction in the field of rare event estimation \cite{dhulipala_bayesian_2022}, where the objective is to use the uncertainty from low-fidelity model outputs as an indicator of proximity of particles to the failure boundary. Following this, the limit state function can be computed through the higher-fidelity model and sample the boundary efficiently.
+
+\subsection{Generalized Multifidelity SVGD}
+
+We treat the Stein update functions as scalar QoIs. Then the high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
+
+\begin{equation*}
+    \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
+\end{equation*}
+
+And similarly, for lower-fidelity models indexed from $1$ to $m$, we can compute the particle positions as:
+
+\begin{equation*}
+    \theta^{(l)}_i \leftarrow \theta^{(l)}_i + \epsilon \phi^{\ast}(\theta^{(l)}), \quad l=1, \cdots, m
+\end{equation*}
+
+where
+
+\begin{align}
+    \phi^{\ast}(\theta^{(0)}) &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{0} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
+    &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
+    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{0} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
+\end{align}
+
+\begin{align}
+    \phi^{\ast}(\theta^{(l)}) &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
+    &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber \\
+    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \log p(\theta_j)]] + \grad_{\theta_j} k(\theta_j, \theta) \nonumber \\ 
+    &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
+    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
+\end{align}
+
+While the $M$ particles are allocated to different models as $M_0, M_1, \cdots, M_m$, the above updates still use all the particles to compute the map at each iteration - this introduces interactions between the multifidelity particles in \stkout{\emph{both} terms of the update: the first term driving the particles to regions of high-probability} \textcolor{red}{(unfortunately, this is not true. When you cut off the kernel matrix to remove the particle interactions amongst the other fidelities, it turns out that only the particle distances corresponding to that fidelity weigh the likelihood)} the second term of the update accounting for the repulsive force that prevents particle collapse into local modes. 
+The repulsive force i.e. the kernel gradient evaluates a shared kernel function over different subsets of $\theta$ in each term, while the force driving particles towards high-probability regions weighs the kernel function by the individual log-likelihoods.
+\textcolor{red}{Interestingly, another algorithmic choice here is the choice of particle positions to use in a given fidelity's updates. For example, if we updated the low-fidelity particle's positions first, these updates could be transmitted to and used by the high fidelity update mechanism in the same step instead of both updates using previously computed positions.}
+
+The above formulation continues to allow flexibility with regards to the specification and the number of lower-fidelity model; but it also raises additional open questions regarding the following aspects:
+
+\begin{enumerate}
+    \item The choice of the kernel function for individual model fidelities
+
+    \item The allocation of particles to different model fidelities (disjoint / overlapping) and how it changes as we step through the method.
+
+    \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
+
+    \item The frequency of updates to particles of different fidelities, and the update sharing frequency within a single iteration of the outer loop.
+
+    \item The stopping criterion that assesses convergence to the target distribution.
+
+    \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
+\end{enumerate}
+
+% \subsection{KL-Divergence Based Correction with kNN Estimator}
+
+
+
+
+
+% Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
+% There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of the need to process very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
+
+% A prominent line of work that deals with the first case uses the so-called `consensus Monte Carlo methods' \citep{rabinovich_variational_2015,scott_bayes_2016}. Here a data sharding (partitioning) step is followed by independent posterior sampling on multiple machines conditioned on the data partitions. 
+% The communication overhead is avoided by combining the posterior draws to form a `consensus' belief about the model unknowns.
+% The algorithm is exact for Gaussian posteriors, but has been found to be broadly useful for non-Gaussian settings too.
+
+% Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
+% Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods. A superficial analogy we can draw is the treatment of the high-fidelity particles as our coreset, and the kernel function that accounts for all model fidelities as a means to enforce a weighted log-likelihood.
+
+% Akin to coresets, the concept of `graph coarsening' is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
+% In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
+
+% While these techniques do not directly relate to the workings or performance of our proposed method relying on the non-parametric version of the SVGD method, they serve as useful guiding principles to improve practical implementations which typically rely on random particle subsampling for efficient kernel computations. 
+
+% A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. 
+% Then, deploying a multistep predictor-corrector method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step for some or all particles via the high-fidelity likelihood i.e. the fidelity assignment \emph{alternates} rather than preceding or following the model updates .
+% The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down in implementations. 
+% However, determination of `when to correct, what to correct' is also a non-trivial problem.
+
+% In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
+
+% \subsection{Particle assignment to various fidelities}
+
+% \emph{Method 0: Non-randomized Assignment}
+% The simplest possible setting does not attempt to reassign particles, instead, at every iteration, a fixed proportion of the particles is treated as the lower-fidelity likelihood update while the remaining are high-fidelity updates. 
+% We look at the number of iterations required for convergence by monitoring the hyperparameters of the kernel function.
+
+% \noindent \emph{Method 1: Randomized Assignment}
+% To correct for possible bias due to incorrect particle assignment, randomized assignment shuffles the particles between the different fidelities after one or more update steps.
+
+% \noindent \emph{Method 2: Assignment based on clustering methods}
+% For the first time, we consider the setting where a small subset of particles is deemed to be non-redundant and a summarization of the dataset. Here, we incorporate a clustering-based heuristic that determines the high-fidelity particles based on a suitable measure of distance.
+% It is of particular importance to ensure that the cost of pairwise distance computations does not grow or outweigh the cost of simpler methods such as randomized assignment i.e. there is possibility of reuse for these when we actually perform the Stein updates.
+
+
+% \noindent \emph{Method 3: Resource allocation using model correlations}
+
+% \subsection{Graph Network Based Propagation}
+% Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
+
+% GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
+% The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear activations results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph as the output. 
+
+% Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
+% This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
+
+% Without additional constraints however, a GN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
+% It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
+% However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
+% We begin with a brief overview of our proposed changes below:
+
+% \subsection{Particle Swarm Optimization based methods}
+% (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
 
 
 \subsection{Sparse Kernel Updates}
