@@ -457,11 +457,11 @@ However, dependencies between the hidden variables mean that this family typical
 In general, VI can result in biased approximations to the posterior.
 
 
-Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
+Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful inference method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
 Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
-Here, the connection between the Langevin-Stein operator and the KL divergence metric is exploited to result in an interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization.
+This is one example of a class of methods that make use of gradient flows of various divergence measures to sample from a target density in generative modeling. SVGD in particular considers gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization, for instance, preconditioning gradient descent with Hessian information \citep{wang_stein_2019}. 
 
-While the procedure is naturally sensitive to choices of initial conditions and optimization methods used to find the fixed point, it can be used to characterize complex posterior distributions and is easily parallelizable.
+While the procedure is naturally sensitive to choices of initial conditions and optimization methods used to find the fixed point, it can be used to characterize complex posterior distributions and is easily parallelizable. 
 
 Vanilla SVGD takes as input the target density function $p(x)$ and a set of initial particles $\{x_i^0\}_{i=1}^{n} \sim q_0(x)$ and returns a set of particles $\{x_i^L\}_{i=1}^{n}$ after L iterations that approximates the target distribution.
 
@@ -776,10 +776,7 @@ The additive correction can be learnt either for a single subset of initial part
 We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
 
 
-
-
 To evaluate the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
-
 
 
 
