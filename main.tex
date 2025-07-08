@@ -573,7 +573,7 @@ In fact, the generalized linear grouped ACV estimator (GACV) \cite{gorodetsky_gr
 
 % While MLBLUE and GACV are competitive with and can outperform ACV in some cases, we nonetheless use ACV in this work since potential performance improvements may be marginal relative to the issue of optimal pilot sampling. Importantly, the issue of covariance estimation still applies to these other estimators, and the pilot sampling termination algorithm presented in this paper can be applied to these other estimators by replacing the above variance formulae with their corresponding equations from \cite{gorodetsky_grouped_2024}.
 
-\subsection{Bayesian Optimal Experimental Design}
+% \subsection{Bayesian Optimal Experimental Design}
 
 
 
@@ -786,12 +786,21 @@ The key features of the update are:
 
 We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/svgd_scalable_mixture_hf.jpg}
+    \caption{Particles mapping to the high-fidelity target posterior based on the surrogate bifidelity gradient estimator for SVGD. The contours of the high-fidelity distribution, a Gaussian mixture, are marked in orange, while those of the unimodal lower-fidelity target are marked in blue. The particle positions at the initial timestep, drawn through quasi-MC uniform sampling, are marked in green. 25 particles are used to correct the low-fidelity estimate at each step.}
+    \label{fig:enter-label}
+\end{figure}
 
 
-Next, we plot the KL divergence as a function of the number of particles between the SVGD particles at the final update step and samples from the true posterior. We overlay the KL divergence trend for the bifidelity case too, with each additional line plot representing the magnitude of the correction function.
+Next, we plot the KL divergence as a function of the number of particles between the SVGD particles at the final update step and samples from the true posterior. 
+We overlay the KL divergence trend for the bifidelity case too, with each additional line plot representing the magnitude of the correction function.
 
 
-To evaluate the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
+
+
+To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
 
 
 
@@ -942,7 +951,7 @@ We treat the Stein update functions as scalar QoIs. Then the high-fidelity parti
 
 \subsection{Convergence of Nested MF-SVGD}
 
-\subsection{Optimal Experimental Design via MF-SVGD Bayesian Inference}
+% \subsection{Optimal Experimental Design via MF-SVGD Bayesian Inference}
 
 
 % \subsection{Generalizing Compressed Representations to Higher Particle Counts}
