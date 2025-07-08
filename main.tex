@@ -772,9 +772,23 @@ where:
     \label{eq:bf_gradient_expr}
 \end{align}
 
-The additive correction can be learnt either for a single subset of initial particles that does not change during the transport process or subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
+The key features of the update are:
+
+\begin{enumerate}
+    \item The correction term does not contain a repulsive force term, and the repulsion term in the first half of the equation has to accomodate particles updated under a single as well as multiple fidelities.
+
+    \item The magnitudes of the score difference are smeared over the domain through the correlations between the high-fidelity and the remainder of the low-fidelity particles. 
+
+    \item The subset of particles used to define the correction term is \emph{randomized} from iteration to iteration. This is key to all particle positions eventually correcting to fit the target high-fidelity density.
+\end{enumerate}
+
+% The additive correction is learnt subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
 
 We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
+
+
+
+Next, we plot the KL divergence as a function of the number of particles between the SVGD particles at the final update step and samples from the true posterior. We overlay the KL divergence trend for the bifidelity case too, with each additional line plot representing the magnitude of the correction function.
 
 
 To evaluate the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
@@ -803,53 +817,60 @@ To evaluate the efficacy of the bifidelity update, we first visualize the evolut
 
 \subsection{Generalized Multifidelity SVGD}
 
+First, we establish correlations between the Stein update function values for multiple models over the SVGD trajectory.
+
+
+
+
+
+
 We treat the Stein update functions as scalar QoIs. Then the high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
 
-\begin{equation*}
-    \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
-\end{equation*}
+% \begin{equation*}
+%     \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
+% \end{equation*}
 
-And similarly, for lower-fidelity models indexed from $1$ to $m$, we can compute the particle positions as:
+% And similarly, for lower-fidelity models indexed from $1$ to $m$, we can compute the particle positions as:
 
-\begin{equation*}
-    \theta^{(l)}_i \leftarrow \theta^{(l)}_i + \epsilon \phi^{\ast}(\theta^{(l)}), \quad l=1, \cdots, m
-\end{equation*}
+% \begin{equation*}
+%     \theta^{(l)}_i \leftarrow \theta^{(l)}_i + \epsilon \phi^{\ast}(\theta^{(l)}), \quad l=1, \cdots, m
+% \end{equation*}
 
-where
+% where
 
-\begin{align}
-    \phi^{\ast}(\theta^{(0)}) &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{0} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
-    &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
-    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{0} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
-\end{align}
+% \begin{align}
+%     \phi^{\ast}(\theta^{(0)}) &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{0} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
+%     &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
+%     &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{0} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
+% \end{align}
 
-\begin{align}
-    \phi^{\ast}(\theta^{(l)}) &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
-    &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber \\
-    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \log p(\theta_j)]] + \grad_{\theta_j} k(\theta_j, \theta) \nonumber \\ 
-    &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
-    &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
-\end{align}
+% \begin{align}
+%     \phi^{\ast}(\theta^{(l)}) &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
+%     &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber \\
+%     &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \log p(\theta_j)]] + \grad_{\theta_j} k(\theta_j, \theta) \nonumber \\ 
+%     &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
+%     &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
+% \end{align}
 
-While the $M$ particles are allocated to different models as $M_0, M_1, \cdots, M_m$, the above updates still use all the particles to compute the map at each iteration - this introduces interactions between the multifidelity particles in \stkout{\emph{both} terms of the update: the first term driving the particles to regions of high-probability} \textcolor{red}{(unfortunately, this is not true. When you cut off the kernel matrix to remove the particle interactions amongst the other fidelities, it turns out that only the particle distances corresponding to that fidelity weigh the likelihood)} the second term of the update accounting for the repulsive force that prevents particle collapse into local modes. 
-The repulsive force i.e. the kernel gradient evaluates a shared kernel function over different subsets of $\theta$ in each term, while the force driving particles towards high-probability regions weighs the kernel function by the individual log-likelihoods.
-\textcolor{red}{Interestingly, another algorithmic choice here is the choice of particle positions to use in a given fidelity's updates. For example, if we updated the low-fidelity particle's positions first, these updates could be transmitted to and used by the high fidelity update mechanism in the same step instead of both updates using previously computed positions.}
+% While the $M$ particles are allocated to different models as $M_0, M_1, \cdots, M_m$, the above updates still use all the particles to compute the map at each iteration - this introduces interactions between the multifidelity particles in \stkout{\emph{both} terms of the update: the first term driving the particles to regions of high-probability} \textcolor{red}{(unfortunately, this is not true. When you cut off the kernel matrix to remove the particle interactions amongst the other fidelities, it turns out that only the particle distances corresponding to that fidelity weigh the likelihood)} the second term of the update accounting for the repulsive force that prevents particle collapse into local modes. 
+% The repulsive force i.e. the kernel gradient evaluates a shared kernel function over different subsets of $\theta$ in each term, while the force driving particles towards high-probability regions weighs the kernel function by the individual log-likelihoods.
+% \textcolor{red}{Interestingly, another algorithmic choice here is the choice of particle positions to use in a given fidelity's updates. For example, if we updated the low-fidelity particle's positions first, these updates could be transmitted to and used by the high fidelity update mechanism in the same step instead of both updates using previously computed positions.}
 
-The above formulation continues to allow flexibility with regards to the specification and the number of lower-fidelity model; but it also raises additional open questions regarding the following aspects:
+% The above formulation continues to allow flexibility with regards to the specification and the number of lower-fidelity model; but it also raises additional open questions regarding the following aspects:
 
-\begin{enumerate}
-    \item The choice of the kernel function for individual model fidelities
+% \begin{enumerate}
+%     \item The choice of the kernel function for individual model fidelities
 
-    \item The allocation of particles to different model fidelities (disjoint / overlapping) and how it changes as we step through the method.
+%     \item The allocation of particles to different model fidelities (disjoint / overlapping) and how it changes as we step through the method.
 
-    \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
+%     \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
 
-    \item The frequency of updates to particles of different fidelities, and the update sharing frequency within a single iteration of the outer loop.
+%     \item The frequency of updates to particles of different fidelities, and the update sharing frequency within a single iteration of the outer loop.
 
-    \item The stopping criterion that assesses convergence to the target distribution.
+%     \item The stopping criterion that assesses convergence to the target distribution.
 
-    \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
-\end{enumerate}
+%     \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
+% \end{enumerate}
 
 % \subsection{KL-Divergence Based Correction with kNN Estimator}
 
