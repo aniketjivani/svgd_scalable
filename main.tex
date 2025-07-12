@@ -458,7 +458,7 @@ However, dependencies between the hidden variables mean that this family typical
 In general, VI can result in biased approximations to the posterior.
 
 
-Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful inference method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
+Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful non-parametric VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
 Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
 This is one example of a class of methods that make use of gradient flows of various divergence measures to sample from a target density in generative modeling. SVGD in particular considers gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization, for instance, preconditioning gradient descent with Hessian information \citep{wang_stein_2019}. 
 
@@ -474,7 +474,8 @@ For iteration $l$, we update the particle positions via:
     \label{eq: vanilla_svgd}
 \end{align}
 
-The first term drives the particles towards regions towards the high probability regions of the posterior distribution, while the second term acts as a repulsive force that prevents mode collapse.
+
+This is a particular class of decomposable Stein operators, known as the Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. The first term drives the particles towards regions towards the high probability regions of the posterior distribution, while the second term acts as a repulsive force that prevents mode collapse.
 
 Generally, there are two major costs associated with performing SVGD, namely:
 
@@ -484,20 +485,23 @@ Generally, there are two major costs associated with performing SVGD, namely:
     \item The $O(n^2)$ cost associated with computing elements $k(x_i, x_j)$ of the dense kernel matrix.
 \end{enumerate}
 
+The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, 
+
+
 The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
 
 One simple example is propagating an initial set of particles towards a bimodal target density. 
 Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and potentially sparsity in the covariance matrix. 
 
-
-
 Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
 
-However, we will initially focus on efficient evaluation of the score function first through multi-fidelity setups, before considering a potential combination of the kernel approximation and score approximation ideas.
+Our initial focus is on efficient evaluation of the score function through multi-fidelity setups that reduce the number of high-fidelity model-based likelihood evaluations, before considering a potential combination of the kernel and score approximation.
+
+
 
 \subsection{Approximate Control Variates for Multi-fidelity Estimation}\label{ss: acv}
 
-\textcolor{red}{Stealing the text from acv with uq with some cuts}
+% \textcolor{red}{Stealing the text from acv with uq with some cuts}
 
 Consider a mapping $Q=f_0(Z)$ that relates the random vector $Z \in \mathbb{R}^{n_{z}}$ and the random variable $Q \in \mathbb{R}$. The expected value of $Q$ is often approximated by a standard $N$-sample Monte Carlo (MC) estimator:
 \begin{align}\label{eqn:mc}
@@ -512,7 +516,7 @@ To reduce the estimator variance, multi-fidelity methods leverage an ensemble of
 Control variates (CVs) are a widely used classical method for variance reduction in Monte-Carlo methods. 
 The general approach is to identify another function $f_1$, such that the traditional expected value estimator described in \autoref{eqn:mc} can be replaced by one constructed with $f_0 - f_1$, with smaller variance. The function $f_1$ is then referred to as a control variate. 
 Typically, selection of $f_1$ (generalized to selection of $\{f_i\}, i=1, \cdots, M$) and identifying a rich set of candidate CVs is a non-trivial procedure barring the exceptions where CVs can be identified from domain knowledge. 
-Over the years, linear transformations of the score function have been one of the popular choices given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods that leverage gradient information \citep{papamarkou_zero_2014}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
+Linear transformations of the score function have been one of the popular choices given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods that leverage gradient information \citep{papamarkou_zero_2014}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
 
 
 In the context of multifidelity methods however, we typically already have access to a hierarcy of models, where each available low-fidelity model can be leveraged as a control variate, but their respective expectations must be computed from samples too. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving reduced-variance estimators in this setting.
@@ -739,11 +743,13 @@ We begin with the assumption that we have access to a black-box model ensemble $
 Then, the log-likelihood functions corresponding to these outputs can be expressed as:
 
 \begin{align}
- L_i = \log p(f_i | \theta)
+ L_i = \log p(\mathbf{y}_i | \theta) = \prod_{k=1}^N \log p(y_k | \theta)
  \label{eq: lik_fid}
 \end{align}
 
-The score function for the target density then simplifies to the following, where the normalizing constant vanishes because it is independent of the model parameters:
+where $\mathbf{y}_i = [y_1, \cdots, y_k, \cdots, y_N]$ are i.i.d. observations at a single realization of $\theta$.
+
+The score function for the target density then simplifies to the following computable expression even when the normalizing constant is not, which permits dealing with unnormalized densities:
 
 \begin{align}
     \nabla_{\theta} \log p_i(\theta \mid D) = L_i \log(p(\theta)),
@@ -784,26 +790,40 @@ The key features of the update are:
 
 % The additive correction is learnt subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
 
-We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
+Most of our initial demonstrations do not specify an explicit prior and likelihood but showcase the methodology on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.75\linewidth]{figures/svgd_scalable_mixture_hf.jpg}
     \caption{Particles mapping to the high-fidelity target posterior based on the surrogate bifidelity gradient estimator for SVGD. The contours of the high-fidelity distribution, a Gaussian mixture, are marked in orange, while those of the unimodal lower-fidelity target are marked in blue. The particle positions at the initial timestep, drawn through quasi-MC uniform sampling, are marked in green. 25 particles are used to correct the low-fidelity estimate at each step.}
-    \label{fig:enter-label}
+    \label{fig:svgd_sf_vs_bf_surrogate}
 \end{figure}
 
 
-Next, we plot the KL divergence as a function of the number of particles between the SVGD particles at the final update step and samples from the true posterior. 
-We overlay the KL divergence trend for the bifidelity case too, with each additional line plot representing the magnitude of the correction function.
+Next, we plot the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
+Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). We follow their recommendation to use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel for all experiments involving SVGD and corresponding KSD computation, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/imq_vs_rbf_basis functions.png}
+    \caption{Examples of basis functions generated through IMQ and RBF kernels for $d=1$. The most significant difference is the smoothly decaying tails for RBF, which falls in the class of KSDs that may fail to detect non-convergence.}
+    \label{fig:imq_vs_rbf}
+\end{figure}
 
 
+
+
+
+KSD is reported for target ensembles with number of particles $\{16, 32, 64, 128, 256, 512\}$ to measure the gap between the density induced by SVGD particles at the final update step and samples from the true posterior. 
+We overlay this trend for the bifidelity case too, with each additional line plot representing the number of particles used in the correction term.
 
 
 To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
 
 
+\textbf{Finite particle convergence for SVGD}
 
+\cite{shi_finite-particle_2023} establish the first finite particle convergence rates for SVGD. 
 
 
 
@@ -965,8 +985,8 @@ We treat the Stein update functions as scalar QoIs. Then the high-fidelity parti
 \section{Conclusions and Extensions}
 
 \appendix
-\section{An example appendix} 
-\lipsum[71]
+% \section{An example appendix} 
+% \lipsum[71]
 
 
 
