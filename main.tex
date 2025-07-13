@@ -388,7 +388,7 @@ This is essentially non-parametric variational inference that is capable of appr
 In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. 
 In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models. 
 These can take the form of forward models with tractable likelihoods, or tractable density estimation procedures on the high-fidelity model. 
-The key contribution is a multifidelity gradient estimator that partitions the incremental transform to enable evaluations under different likelihood models and also optionally partitions the kernel evaluations based on the neighbourhood of influence for each particle. These advancements greatly accelerate Bayesian inference via SVGD and highlight the important role of control variate techniques for Monte Carlo methods.
+The key contribution is a multifidelity gradient estimator that partitions the incremental transform to enable evaluations under different likelihood models and also optionally partitions the kernel evaluations based on the neighbourhood of influence for each particle. These advancements result in improved algorithms for Bayesian inference via SVGD and highlight the important role of control variate techniques for Monte Carlo methods.
 % and can also be used to propose an estimator for expected information gain that implicitly incorporates multi-fidelity information.
 \end{abstract}
 % We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
@@ -460,7 +460,9 @@ In general, VI can result in biased approximations to the posterior.
 
 Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful non-parametric VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
 Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
-This is one example of a class of methods that make use of gradient flows of various divergence measures to sample from a target density in generative modeling. SVGD in particular considers gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization, for instance, preconditioning gradient descent with Hessian information \citep{wang_stein_2019}. 
+This is one example of a class of methods that make use of gradient flows of various divergence measures to sample from a target density in generative modeling. 
+SVGD in particular considers gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization, for instance, preconditioning gradient descent with Hessian information \citep{wang_stein_2019}. 
+Stein's identity has also aided the construction of a useful discrepancy measure, the so-called Kernelized Stein Discrepancy (KSD), which finds use not only in goodness-of-fit statistical tests \citep{chwialkowski_kernel_2016}, but has also been extended to a measure transport framework under arbitrary transport map parametrization and an unbiased estimator of the score\citep{fisher_measure_2021}.
 
 While the procedure is naturally sensitive to choices of initial conditions and optimization methods used to find the fixed point, it can be used to characterize complex posterior distributions and is easily parallelizable. 
 
@@ -485,7 +487,7 @@ Generally, there are two major costs associated with performing SVGD, namely:
     \item The $O(n^2)$ cost associated with computing elements $k(x_i, x_j)$ of the dense kernel matrix.
 \end{enumerate}
 
-The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, 
+The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, they form a class of single-fidelity SVGD variants and do not consider reduction in cost of an individual forward model evaluation that underlies the likelihood definition.
 
 
 The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
@@ -790,18 +792,16 @@ The key features of the update are:
 
 % The additive correction is learnt subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
 
-Most of our initial demonstrations do not specify an explicit prior and likelihood but showcase the methodology on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density which corresponds to one of the modes:
+Most of our initial demonstrations do not specify an explicit prior and likelihood but showcase the methodology on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density $p_1$ which corresponds to one of the modes.
+\begin{align}
+    p_1(\mathbf{x}) &= \CN\left(\mathbf{x}; \begin{bmatrix}-2.5 \\ -1.5\end{bmatrix}, \begin{bmatrix}1.5 & 0 \\ 0 & 0.5\end{bmatrix}\right)\\ \nonumber
+    p_2(\mathbf{x}) &= \CN \left(\mathbf{x}; \begin{bmatrix}0.5 \\ 0.2\end{bmatrix}, \begin{bmatrix}2.0 & 0.3 \\ 0.3 & 0.5\end{bmatrix}\right)\\ 
+    p_0(\mathbf{x}) &= \sum_{j=1}^2 \pi_j \CN(\mathbf{x}; \mu_j, \sigma_j) \quad, \pi_1 = \pi_2 = 0.5 \nonumber
+    \label{eq:p0p1_toy_example}
+\end{align}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\linewidth]{figures/svgd_scalable_mixture_hf.jpg}
-    \caption{Particles mapping to the high-fidelity target posterior based on the surrogate bifidelity gradient estimator for SVGD. The contours of the high-fidelity distribution, a Gaussian mixture, are marked in orange, while those of the unimodal lower-fidelity target are marked in blue. The particle positions at the initial timestep, drawn through quasi-MC uniform sampling, are marked in green. 25 particles are used to correct the low-fidelity estimate at each step.}
-    \label{fig:svgd_sf_vs_bf_surrogate}
-\end{figure}
-
-
-Next, we plot the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
-Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). We follow their recommendation to use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel for all experiments involving SVGD and corresponding KSD computation, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}.
+We assess the performance of each SVGD variant through the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
+Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). We follow their recommendation to use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel for all experiments involving SVGD and corresponding KSD computation, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
 
 \begin{figure}[H]
     \centering
@@ -811,6 +811,13 @@ Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_20
 \end{figure}
 
 
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.75\linewidth]{figures/svgd_scalable_mixture_hf.jpg}
+    \includegraphics[width=\textwidth]{figures/bifidelity_svgd_comparisons_gaussian_mixture_rbf.jpg}
+    \caption{Particles mapping to the high-fidelity target posterior based on the surrogate bifidelity gradient estimator for SVGD (right) and the single fidelity estimators under individual LF and HF targets (left and middle). The contours of the high-fidelity distribution, a Gaussian mixture, are marked in orange, while those of the unimodal lower-fidelity target are marked in blue. The particle positions at the initial timestep, drawn through quasi-MC uniform sampling, are marked in green, and those in brown represent the positions at the final timestep. 32 particles are used to correct the low-fidelity estimate at each step for the surrogate estimator.}
+    \label{fig:svgd_sf_vs_bf_surrogate_rbf}
+\end{figure}
 
 
 
@@ -819,6 +826,9 @@ We overlay this trend for the bifidelity case too, with each additional line plo
 
 
 To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
+
+
+
 
 
 \textbf{Finite particle convergence for SVGD}
@@ -984,6 +994,8 @@ We treat the Stein update functions as scalar QoIs. Then the high-fidelity parti
 
 \section{Conclusions and Extensions}
 
+In this work, we considered the application of multifidelity surrogate and multifidelity estimator techniques to a general -purpose non-parametric variational inference technique, namely the SVGD. SVGD is based on Stein's identity, which has found applications in hypothesis testing, development of traditional control variates for MCMC, hyperparameter marginalization. SVGD in particular is useful for Bayesian inference in settings with access to a smooth and differentiable posterior density. We explore the benefits of approximate control variates based on lower-fidelity likelihood ensembles on the convergence and computational cost of SVGD.
+
 \appendix
 % \section{An example appendix} 
 % \lipsum[71]
@@ -991,6 +1003,10 @@ We treat the Stein update functions as scalar QoIs. Then the high-fidelity parti
 
 
 \section*{Acknowledgments}
+This material is based upon work supported in part by the National Science Foundation Graduate Research Fellowship under Grant No. DGE 1841052.
+
+This research is supported in part through computational resources and services provided by Advanced Research Computing at the University of Michigan, Ann Arbor.
+
 
 \bibliographystyle{siamplain}
 \bibliography{local,references}
