@@ -446,10 +446,10 @@ The object of interest in Bayesian inference is the ``posterior density'' $p(\th
 
 where $p(D)$ is the evidence or marginal likelihood, and often intractable quantity that acts as a normalizing constant on the often tractable likelihood and prior.
 
-As far as inference techniques go, Markov Chain Monte Carlo (MCMC) methods \citep{brooks_handbook_2011} are considered a workhorse of modern statistical inference. 
+Markov Chain Monte Carlo (MCMC) methods \citep{brooks_handbook_2011} are considered a workhorse of modern statistical inference. 
 The high-level idea is to generate a sequence of random samples through construction of a Markov chain whose equilibrium distribution is the target posterior distribution. 
 In addition to sampling from arbitrary distribution families, it also has the key benefit of asymptotic convergence guarantees. 
-However, these are computationally intensive when dealing with high-dimensional parameter spaces, despite some impressive algorithmic advancements that make use of gradient information to guide new proposals.
+However, these methods are computationally intensive when dealing with high-dimensional parameter spaces, despite some impressive algorithmic advancements that make use of gradient information to guide new proposals.
 
 Variational Inference (VI) reformulates traditional Bayesian inference as an optimization problem, where the posterior is approximated by a parametric family of distributions that is closest to the true posterior through a suitable measure. This is usually the reverse KL divergence or other measures from the family of $f$-divergence between probabiliy distributions. 
 While VI is much more scalable to higher-dimensional spaces compared to MCMC, this scalability often trades off its approximation capacity, which is constrained by the choice of the variational family. 
@@ -461,10 +461,12 @@ In general, VI can result in biased approximations to the posterior.
 Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful non-parametric VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
 Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
 This is one example of a class of methods that make use of gradient flows of various divergence measures to sample from a target density in generative modeling. 
-SVGD in particular considers gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure, and various strategies can be used to accelerate the optimization, for instance, preconditioning gradient descent with Hessian information \citep{wang_stein_2019}. 
-Stein's identity has also aided the construction of a useful discrepancy measure, the so-called Kernelized Stein Discrepancy (KSD), which finds use not only in goodness-of-fit statistical tests \citep{chwialkowski_kernel_2016}, but has also been extended to a measure transport framework under arbitrary transport map parametrization and an unbiased estimator of the score\citep{fisher_measure_2021}.
+SVGD in particular considers gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. 
+This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. 
+It can be used to characterize complex posterior distributions and is easily parallelizable. 
 
-While the procedure is naturally sensitive to choices of initial conditions and optimization methods used to find the fixed point, it can be used to characterize complex posterior distributions and is easily parallelizable. 
+
+Stein's method has also been extended recently to a measure transport framework under arbitrary transport map parametrization \citep{fisher_measure_2021}, using the Kernelized Stein Discrepancy (KSD) \citep{liu_kernelized_2016} as the objective instead of the traditional KL divergence.
 
 Vanilla SVGD takes as input the target density function $p(x)$ and a set of initial particles $\{x_i^0\}_{i=1}^{n} \sim q_0(x)$ and returns a set of particles $\{x_i^L\}_{i=1}^{n}$ after L iterations that approximates the target distribution.
 
@@ -479,6 +481,17 @@ For iteration $l$, we update the particle positions via:
 
 This is a particular class of decomposable Stein operators, known as the Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. The first term drives the particles towards regions towards the high probability regions of the posterior distribution, while the second term acts as a repulsive force that prevents mode collapse.
 
+
+Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure itself, which only requires the perturbation direction to be aligned with the action of the Langevin-Stein operator. 
+The vanilla SVGD procedure is naturally sensitive to choices of initial conditions, optimization methods, and hyperparameters such as the choice of kernel and the step size / learning rate sequence, used to find the fixed point. 
+However, various strategies can be used to accelerate the optimization. For instance, more flexible matrix-valued kernels can be used for gradient descent preconditioned with Hessian information \citep{wang_stein_2019}. 
+In other cases, such as \cite{sharrock_coin_2023}, highly effective learning-rate free methods are devised through simple betting strategies. 
+
+% Stein's identity has also aided the construction of a useful discrepancy measure, the so-called Kernelized Stein Discrepancy (KSD), which finds use not only in goodness-of-fit statistical tests \citep{chwialkowski_kernel_2016}, but has also been extended to a measure transport framework under arbitrary transport map parametrization and an unbiased estimator of the score\citep{fisher_measure_2021}.
+
+
+
+
 Generally, there are two major costs associated with performing SVGD, namely:
 
 \begin{enumerate}
@@ -490,16 +503,11 @@ Generally, there are two major costs associated with performing SVGD, namely:
 The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, they form a class of single-fidelity SVGD variants and do not consider reduction in cost of an individual forward model evaluation that underlies the likelihood definition.
 
 
-The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
-
-One simple example is propagating an initial set of particles towards a bimodal target density. 
-Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and potentially sparsity in the covariance matrix. 
+The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. One simple example is propagating an initial set of particles towards a bimodal target density. Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and potentially sparsity in the covariance matrix. 
 
 Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
 
-Our initial focus is on efficient evaluation of the score function through multi-fidelity setups that reduce the number of high-fidelity model-based likelihood evaluations, before considering a potential combination of the kernel and score approximation.
-
-
+Our initial focus is on efficient evaluation of the score function through multi-fidelity setups that reduce the number of high-fidelity model-based likelihood evaluations, before considering a potential combination of the kernel and score approximation for future work.
 
 \subsection{Approximate Control Variates for Multi-fidelity Estimation}\label{ss: acv}
 
@@ -792,18 +800,18 @@ The key features of the update are:
 
 % The additive correction is learnt subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
 
-A quality measure is needed to determine when a sequence of samples is converging or not to the target density in SVGD. Stein's method provides a tool to define a discrepancy measure between densities $p$ and $q$ that serves as a tool to measure asymptotic bias in approximate MCMC samplers \cite{gorham_measuring_2017} and is also tailored to SVGD-based inference. For smooth functions $f(x) \in \CF$, the Stein discrepancy measure\citep{liu_kernelized_2016} is defined as :
+A quality measure is needed to determine when a sequence of samples is converging or not to the target density in SVGD. Stein's method provides a tool to define a discrepancy measure between densities $p$ and $q$ that can measure asymptotic bias in approximate MCMC samplers \cite{gorham_measuring_2017} and is also tailored to SVGD-based inference . For smooth functions $f(x) \in \CF$, the Stein discrepancy measure\citep{liu_kernelized_2016} is defined as :
 
 \begin{equation}
     \mathbb{S}(q, p) = \max_{f \in \CF}\left(\EE_q[\nabla_x \log p(x)f(x) + \nabla_x f(x)]\right)^2 \label{eq:ksd_regular}
 \end{equation}
 
-\cite{liu_kernelized_2016} define a computationally tractable version of this by assuming $\CF$ to be a ball in a reproducing kernel Hilbert space (RKHS) associated with a smooth positive definite kernel $k(x, x')$. Denoting $\nabla_x \log p(x)$ by $s_p$:
+\cite{liu_kernelized_2016} define a computationally tractable version of this by assuming $\CF$ to be a ball in a reproducing kernel Hilbert space (RKHS) associated with a smooth positive definite kernel $k(x, x')$. Denoting $\nabla_x \log p(x)$ by $s_p$, the Kernelized Stein Discrepancy (KSD),
 
 \begin{align}
     \mathbb{S}(q, p) &= \mathbb{E}_{x, x' \sim q}[u_p(x, x')] \nonumber \\ 
     &= \mathbb{E}_{x, x' \sim q}[s_p(x)^{\top} k(x, x')s_p(x') + s_p(x)^{\top} \nabla_{x'}k(x, x') + \nonumber\\ 
-    & \nabla_x k(x, x')^{\top}s_q(x') + \operatorname{trace}(\nabla_{x, x'}k(x, x'))] \label{eq:ksd_kernel}
+    & \nabla_x k(x, x')^{\top}s_p(x') + \operatorname{trace}(\nabla_{x, x'}k(x, x'))] \label{eq:ksd_kernel}
 \end{align}
 
 is the empirical evaluation of $\mathbb{S}(q, p)$, which can be estimated through the following $U$-statistic:
