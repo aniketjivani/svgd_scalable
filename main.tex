@@ -55,7 +55,7 @@
 \usepackage{tabularx}
 % \usepackage{amsmath}
 % \usepackage{amsfonts}
-% \usepackage{amssymb}
+\usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{xurl}
 \usepackage{lineno}
@@ -730,7 +730,8 @@ In fact, the generalized linear grouped ACV estimator (GACV) \cite{gorodetsky_gr
 
 \section{Methodology}
 
-We begin with the assumption that we have access to a black-box model ensemble $f_i(\theta)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $\theta \in \RR^{n_\theta}$ is a random vector.
+Given access to a model ensemble $f_i(x)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $x \in \RR^{n_x}$ is a random vector, the data-generating process and the log-likelihood functions corresponding to these outputs can be expressed as:
+
 
 % Let $y_0$ and $y_1$ be observations 
 
@@ -742,19 +743,18 @@ We begin with the assumption that we have access to a black-box model ensemble $
 
 % where \varepsilon is homoskedastic noise associated with  
 
-Then, the log-likelihood functions corresponding to these outputs can be expressed as:
 
 \begin{align}
- L_i = \log p(\mathbf{y}_i | \theta) = \prod_{k=1}^N \log p(y_k | \theta)
- \label{eq: lik_fid}
+ y_i = f_i(x) + \epsilon_i, \qquad L_i = \log p(\mathbf{y}_i | x) = \prod_{k=1}^N \log p(y_k | x)
+ \label{eq: lik_fid_dgp}
 \end{align}
 
-where $\mathbf{y}_i = [y_1, \cdots, y_k, \cdots, y_N]$ are i.i.d. observations at a single realization of $\theta$.
+where $\mathbf{y}_i = [y_1, \cdots, y_k, \cdots, y_N]$ are i.i.d. observations and $\epsilon_i$ is zero-mean additive noise.
 
-The score function for the target density then simplifies to the following computable expression even when the normalizing constant is not, which permits dealing with unnormalized densities:
+Using the same prior density $p_o(x)$ in each of the inference setups for the individual models, the score function for the posterior PDF then simplifies to the following tractable expression that does not require evaluation of the normalizing constant:
 
 \begin{align}
-    \nabla_{\theta} \log p_i(\theta \mid D) = L_i \log(p(\theta)),
+    \nabla_{x} \log p_i(x \mid D) = \nabla_x (L_i  + \log(p_o(x)),
     \label{eqn: bayes_rule_score}
 \end{align}
 
@@ -763,7 +763,7 @@ The score function for the target density then simplifies to the following compu
 
 % Then assuming an additive correction, a simple Stein update for the parameters $\theta_i$ would become:
 
-Before we propose the multi-fidelity construction It is is still instructive to demonstrate the basic idea of partitioning the likelihood evaluation costs through a bifidelity surrogate SVGD construction, where a subset of particles evaluated under the lower-fidelity target density are `corrected' through the corresponding high-fidelity density gradient update.
+Before we propose the multi-fidelity construction, it is is still instructive to demonstrate the basic idea of partitioning the likelihood evaluation costs through a bifidelity surrogate SVGD construction, where a subset of particles evaluated under the lower-fidelity target density are `corrected' through the corresponding high-fidelity density gradient update.
 
 Let $n_0$ be the number of particles that are updated under both high and low-fidelity likelihood models. Let $n_1$ represent the number of particles updated only under the low-fidelity representation.
 
@@ -792,7 +792,35 @@ The key features of the update are:
 
 % The additive correction is learnt subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
 
-Most of our initial demonstrations do not specify an explicit prior and likelihood but showcase the methodology on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density $p_1$ which corresponds to one of the modes.
+A quality measure is needed to determine when a sequence of samples is converging or not to the target density in SVGD. Stein's method provides a tool to define a discrepancy measure between densities $p$ and $q$ that serves as a goodness-of-fit test and is also tailored to the inference method. For smooth functions $f(x) \in \CF$, the Stein discrepancy measure\citep{liu_kernelized_2016} is defined as :
+
+\begin{equation}
+    \mathbb{S}(q, p) = \max_{f \in \CF}\left(\EE_q[\nabla_x \log p(x)f(x) + \nabla_x f(x)]\right)^2 \label{eq:ksd_regular}
+\end{equation}
+
+\cite{liu_kernelized_2016} define a computationally tractable version of this by assuming $\CF$ to be a ball in a reproducing kernel Hilbert space (RKHS) associated with a smooth positive definite kernel $k(x, x')$. Denoting $\nabla_x \log p(x)$ by $s_p$:
+
+\begin{align}
+    \mathbb{S}(q, p) &= \mathbb{E}_{x, x' \sim q}[u_p(x, x')] \nonumber \\ 
+    &= \mathbb{E}_{x, x' \sim q}[s_p(x)^{\top} k(x, x')s_p(x') + s_p(x)^{\top} \nabla_{x'}k(x, x') + \nonumber\\ 
+    & \nabla_x k(x, x')^{\top}s_q(x') + \operatorname{trace}(\nabla_{x, x'}k(x, x'))] \label{eq:ksd_kernel}
+\end{align}
+
+is the empirical evaluation of $\mathbb{S}(q, p)$, which can be estimated through the following $U$-statistic:
+
+\begin{align}
+    \hat{\mathbb{S}}_u(q, p) = \frac{1}{n(n-1)}\sum_{1 \leq i \neq j \leq n} u_p(x_i, x_j)
+\end{align}
+
+% \begin{align}
+%     d_{\CH}(q, p) \triangleq
+% \end{align}
+
+% We assess the performance of each SVGD variant through the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
+
+Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). We follow their recommendation to use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel for all experiments involving SVGD and corresponding KSD computation, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
+
+Our initial demonstrations do not specify an explicit prior and likelihood but instead evaluate the effectiveness of the proposed estimator on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density $p_1$ which corresponds to one of the modes.
 \begin{align}
     p_1(\mathbf{x}) &= \CN\left(\mathbf{x}; \begin{bmatrix}-2.5 \\ -1.5\end{bmatrix}, \begin{bmatrix}1.5 & 0 \\ 0 & 0.5\end{bmatrix}\right)\\ \nonumber
     p_2(\mathbf{x}) &= \CN \left(\mathbf{x}; \begin{bmatrix}0.5 \\ 0.2\end{bmatrix}, \begin{bmatrix}2.0 & 0.3 \\ 0.3 & 0.5\end{bmatrix}\right)\\ 
@@ -800,12 +828,9 @@ Most of our initial demonstrations do not specify an explicit prior and likeliho
     \label{eq:p0p1_toy_example}
 \end{align}
 
-We assess the performance of each SVGD variant through the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
-Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). We follow their recommendation to use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel for all experiments involving SVGD and corresponding KSD computation, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
-
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\linewidth]{figures/imq_vs_rbf_basis functions.png}
+    \includegraphics[width=0.85\linewidth]{figures/imq_vs_rbf_basis_functions.png}
     \caption{Examples of basis functions generated through IMQ and RBF kernels for $d=1$. The most significant difference is the smoothly decaying tails for RBF, which falls in the class of KSDs that may fail to detect non-convergence.}
     \label{fig:imq_vs_rbf}
 \end{figure}
@@ -819,10 +844,12 @@ Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_20
     \label{fig:svgd_sf_vs_bf_surrogate_rbf}
 \end{figure}
 
+Next, KSD is reported for target ensembles with number of particles $\{16, 32, 64, 128, 256, 512\}$ to measure the gap between the density induced by SVGD particles at the final update step and samples from the true posterior. 
 
-
-KSD is reported for target ensembles with number of particles $\{16, 32, 64, 128, 256, 512\}$ to measure the gap between the density induced by SVGD particles at the final update step and samples from the true posterior. 
 We overlay this trend for the bifidelity case too, with each additional line plot representing the number of particles used in the correction term.
+
+
+
 
 
 To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
@@ -856,7 +883,7 @@ To better interpret the efficacy of the bifidelity update, we first visualize th
 
 \subsection{Generalized Multifidelity SVGD}
 
-First, we establish correlations between the Stein update function values for multiple models over the SVGD trajectory.
+
 
 
 
