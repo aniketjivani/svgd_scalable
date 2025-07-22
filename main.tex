@@ -497,13 +497,20 @@ Generally, there are two major costs associated with performing SVGD, namely:
 \begin{enumerate}
     \item Computing the gradient $\nabla_x \log p(x)$. For Bayesian Inference, this amounts to evaluating the score function associated with the posterior distribution and thereby the cost of repeated likelihood evaluations via a high-fidelity model.
 
-    \item The $O(n^2)$ cost associated with computing elements $k(x_i, x_j)$ of the dense kernel matrix.
+    \item The $O(n^2)$ cost associated with computing elements $k(x_i, x_j)$ of the dense kernel matrix. \label{it: kernel_cost}
 \end{enumerate}
 
 The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, they form a class of single-fidelity SVGD variants and do not consider reduction in cost of an individual forward model evaluation that underlies the likelihood definition.
 
 
-The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. One simple example is propagating an initial set of particles towards a bimodal target density. Eventually, particles will assume memberships of separate clusters such that a particle belonging to one cluster will exhibit little to no influence on those belonging to the other cluster. This introduces some structure and potentially sparsity in the covariance matrix. 
+The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. One simple example is propagation of an initial set of particles towards a bimodal target density, visualized in \autoref{fig:cov_structure}. Since particles assume memberships of separate clusters, this introduces some structure and potentially sparsity in the covariance matrix, which may be exploited to bring down the cost from \autoref{it: kernel_cost}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/structure_cov_kernel.jpg}
+    \caption{Covariance kernel with block diagonal structure corresponding to particles sampled from a bimodal target density}
+    \label{fig:cov_structure}
+\end{figure}
 
 Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
 
@@ -852,9 +859,8 @@ Our initial demonstrations do not specify an explicit prior and likelihood but i
     \label{fig:svgd_sf_vs_bf_surrogate_rbf}
 \end{figure}
 
-Next, KSD is reported for target ensembles with number of particles $\{16, 32, 64, 128, 256, 512\}$ to measure the gap between the density induced by SVGD particles at the final update step and samples from the true posterior. 
-
-We overlay this trend for the bifidelity case too, with each additional line plot representing the number of particles used in the correction term.
+Next, KSD is reported for target ensembles with total number of particles set to \textnormal{\{16, 32, 64, 128, 256, 512\}}
+to measure the gap between the density induced by SVGD particles at the final update step and samples from the true posterior. We compare KSD trends for vanilla SVGD and the bifidelity-surrogate SVGD (BFS-SVGD), the latter with a varying number of particles used for the correction term.
 
 
 
@@ -866,9 +872,9 @@ To better interpret the efficacy of the bifidelity update, we first visualize th
 
 
 
-\textbf{Finite particle convergence for SVGD}
+% \textbf{Finite particle convergence for SVGD}
 
-\cite{shi_finite-particle_2023} establish the first finite particle convergence rates for SVGD. 
+% \cite{shi_finite-particle_2023} establish the first finite particle convergence rates for SVGD. 
 
 
 
