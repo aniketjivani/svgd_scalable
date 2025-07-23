@@ -384,11 +384,13 @@
 Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. 
 Various advancements in algorithms leveraging Stein operators have since found application in problems in hypothesis testing, information theory, optimal transport and inference. 
 A simple method for performing Bayesian Inference, called Stein Variational Gradient Descent (SVGD), relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
-This is essentially non-parametric variational inference that is capable of approximating complex posterior distributions. However, SVGD struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity model is involved. 
-In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. 
+This is essentially non-parametric variational inference that is capable of approximating complex posterior distributions. 
+However, SVGD struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity forward model is involved, which is very common in scientific applications.
+% In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. 
 In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models. 
-These can take the form of forward models with tractable likelihoods, or tractable density estimation procedures on the high-fidelity model. 
-The key contribution is a multifidelity gradient estimator that partitions the incremental transform to enable evaluations under different likelihood models and also optionally partitions the kernel evaluations based on the neighbourhood of influence for each particle. These advancements result in improved algorithms for Bayesian inference via SVGD and highlight the important role of control variate techniques for Monte Carlo methods.
+These typically take the form of multiple forward models with tractable likelihoods.
+% , or tractable density estimation procedures which use the high-fidelity model. 
+The key contribution is a multifidelity gradient estimator that partitions the incremental transform based on the correlated score functions at every SVGD step. These advancements result in improved estimates for Monte-Carlo integrands and posterior summary statistics in Bayesian Inference, and highlight the benefits of deploying control variate techniques for Monte Carlo methods.
 % and can also be used to propose an estimator for expected information gain that implicitly incorporates multi-fidelity information.
 \end{abstract}
 % We also propose a sparsified kernel evaluation method that borrows ideas from sparse attention techniques for transformers to bring down the quadratic complexity of computing pairwise distances.
@@ -533,10 +535,11 @@ To reduce the estimator variance, multi-fidelity methods leverage an ensemble of
 Control variates (CVs) are a widely used classical method for variance reduction in Monte-Carlo methods. 
 The general approach is to identify another function $f_1$, such that the traditional expected value estimator described in \autoref{eqn:mc} can be replaced by one constructed with $f_0 - f_1$, with smaller variance. The function $f_1$ is then referred to as a control variate. 
 Typically, selection of $f_1$ (generalized to selection of $\{f_i\}, i=1, \cdots, M$) and identifying a rich set of candidate CVs is a non-trivial procedure barring the exceptions where CVs can be identified from domain knowledge. 
-Linear transformations of the score function have been one of the popular choices given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods that leverage gradient information \citep{papamarkou_zero_2014}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
+Linear transformations of the score function have been one of the popular choices given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods with gradient information and marginalization of hyperparameters \citep{papamarkou_zero_2014,oates_control_2017}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators.
+% \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
 
 
-In the context of multifidelity methods however, we typically already have access to a hierarcy of models, where each available low-fidelity model can be leveraged as a control variate, but their respective expectations must be computed from samples too. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving reduced-variance estimators in this setting.
+In the context of multifidelity methods however, we typically already have access to a hierarchy of models, where each available low-fidelity model can be leveraged as a control variate, but their respective expectations must be computed from samples too. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving reduced-variance estimators in this setting.
 This method introduces $M$ auxiliary random variables $Q_{m}$ for $m=1,\ldots,M$ that are outputs of the corresponding (e.g., low-fidelity) models $Q_{m} =f_{m}(Z)$, then combines the corresponding MC estimates of each low-fidelity model, $\hat{Q}_{m}$, into a single estimator. The ACV estimator, which we denote $\tilde{Q}$, can be written as:
 \begin{align}
         \Tilde{Q}(z,\alpha,\CA) &:= 
@@ -807,7 +810,7 @@ The key features of the update are:
 
 % The additive correction is learnt subsets that are randomized from iteration to iteration. In this case, the repulsion term is driven by particle positions under the misspecified likelihood during the initial step and a mixture of particles driven by multiple fidelities in subsequent steps.
 
-A quality measure is needed to determine when a sequence of samples is converging or not to the target density in SVGD. Stein's method provides a tool to define a discrepancy measure between densities $p$ and $q$ that can measure asymptotic bias in approximate MCMC samplers \cite{gorham_measuring_2017} and is also tailored to SVGD-based inference . For smooth functions $f(x) \in \CF$, the Stein discrepancy measure\citep{liu_kernelized_2016} is defined as :
+A quality measure is needed to determine when a sequence of samples is converging or not to the target density in SVGD. Stein's method provides a tool to define a discrepancy measure between densities $p$ and $q$ that can measure asymptotic bias in approximate MCMC samplers \cite{gorham_measuring_2017} and is also tailored to SVGD-based inference.\footnote{A key benefit is the ability to evaluate the discrepancy without explicit density estimation of $q$ for the propagated particles, unlike the more popular KL-divergence.} For smooth functions $f(x) \in \CF$, the Stein discrepancy measure\citep{liu_kernelized_2016} is defined as :
 
 \begin{equation}
     \mathbb{S}(q, p) = \max_{f \in \CF}\left(\EE_q[\nabla_x \log p(x)f(x) + \nabla_x f(x)]\right)^2 \label{eq:ksd_regular}
@@ -833,9 +836,10 @@ is the empirical evaluation of $\mathbb{S}(q, p)$, which can be estimated throug
 
 % We assess the performance of each SVGD variant through the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
 
-Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). We follow their recommendation to use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel for all experiments involving SVGD and corresponding KSD computation, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
+Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). 
+In examples showcasing SVGD for higher dimensions, we use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ instead of the RBF or Matern kernel in line with their recommendations, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
 
-Our initial demonstrations do not specify an explicit prior and likelihood but instead evaluate the effectiveness of the proposed estimator on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a bimodal high-fidelity target density, leveraging a lower-fidelity density $p_1$ which corresponds to one of the modes.
+Our initial demonstrations do not specify an explicit prior and likelihood but instead evaluate the effectiveness of the proposed estimator on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a Gaussian mixture high-fidelity target density, while leveraging a lower-fidelity density $p_1$ which corresponds to one of the modes.
 \begin{align}
     p_1(\mathbf{x}) &= \CN\left(\mathbf{x}; \begin{bmatrix}-2.5 \\ -1.5\end{bmatrix}, \begin{bmatrix}1.5 & 0 \\ 0 & 0.5\end{bmatrix}\right)\\ \nonumber
     p_2(\mathbf{x}) &= \CN \left(\mathbf{x}; \begin{bmatrix}0.5 \\ 0.2\end{bmatrix}, \begin{bmatrix}2.0 & 0.3 \\ 0.3 & 0.5\end{bmatrix}\right)\\ 
@@ -866,7 +870,7 @@ to measure the gap between the density induced by SVGD particles at the final up
 
 
 
-To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
+% To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
 
 
 
@@ -895,16 +899,17 @@ To better interpret the efficacy of the bifidelity update, we first visualize th
 % A viable strategy is to allocate model fidelities to individual particles, and construct an unbiased estimator of the gradient flow to target cost savings via limited and strategic querying of high-fidelity model / likelihood updates. 
 % While not quite used for Bayesian inference, similar ideas have found traction in the field of rare event estimation \cite{dhulipala_bayesian_2022}, where the objective is to use the uncertainty from low-fidelity model outputs as an indicator of proximity of particles to the failure boundary. Following this, the limit state function can be computed through the higher-fidelity model and sample the boundary efficiently.
 
-\subsection{Generalized Multifidelity SVGD}
+\subsection{Generalized Multifidelity-SVGD (MFS-SVGD)}
+
+The most general form of a multi-fidelity update for SVGD would partition the incremental transform in the style of ACVs so that particles are allocated to target-densities of different fidelities for computing the incremental transform at every iteration. 
+The key difference compared to the surrogate SVGD estimator we discussed in the previous section would stem from the unbiasedness of the ACV estimator.
+
+
+Following the notation of \autoref{ss: acv}, we obtain:
 
 
 
 
-
-
-
-
-We treat the Stein update functions as scalar QoIs. Then the high-fidelity particle positions i.e. those generated using the likelihood of the high-fidelity model are given by:
 
 % \begin{equation*}
 %     \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
@@ -1014,13 +1019,16 @@ We treat the Stein update functions as scalar QoIs. Then the high-fidelity parti
 % (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
 
 
-\subsection{Sparse Kernel Updates}
+% \subsection{Sparse Kernel Updates}
 
 \section{Results}
 
-\subsection{Convergence of Single Level MF-SVGD}
+\subsection{Estimator Performance for Monte-Carlo Integration}
 
-\subsection{Convergence of Nested MF-SVGD}
+
+
+
+\subsection{Bayesian Inference}
 
 % \subsection{Optimal Experimental Design via MF-SVGD Bayesian Inference}
 
@@ -1044,9 +1052,7 @@ In this work, we considered the application of multifidelity surrogate and multi
 
 
 \section*{Acknowledgments}
-This material is based upon work supported in part by the National Science Foundation Graduate Research Fellowship under Grant No. DGE 1841052.
-
-This research is supported in part through computational resources and services provided by Advanced Research Computing at the University of Michigan, Ann Arbor.
+This work is supported in part by the National Science Foundation Graduate Research Fellowship under Grant No. DGE 1841052, the Department of Navy award N00014-23-1-2735 issued by the Office of Naval Research, and through computational resources and services provided by Advanced Research Computing at the University of Michigan, Ann Arbor.
 
 
 \bibliographystyle{siamplain}
