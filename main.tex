@@ -901,11 +901,38 @@ to measure the gap between the density induced by SVGD particles at the final up
 
 \subsection{Generalized Multifidelity-SVGD (MFS-SVGD)}
 
-The most general form of a multi-fidelity update for SVGD would partition the incremental transform in the style of ACVs so that particles are allocated to target-densities of different fidelities for computing the incremental transform at every iteration. 
+The most general form of a multi-fidelity update for SVGD would partition the incremental transform in the style of ACVs so that particles are apportioned to target densities of different fidelities for computing the incremental transform at every iteration. 
 The key difference compared to the surrogate SVGD estimator we discussed in the previous section would stem from the unbiasedness of the ACV estimator.
 
 
-Following the notation of \autoref{ss: acv}, we obtain:
+Following the notation introduced in \autoref{ss: acv}, we can in fact propose multiple ACV estimators, depending on how we split the terms in the vanilla SVGD gradient:
+
+\begin{enumerate}
+\item Decomposing the kernel-weighted scores and the repulsive force terms:
+\begin{align}
+        \tilde{\phi}(x, \alpha, \CA) = \tilde{\phi_0}(x_0) + \sum_{m=1}^M \alpha_m \left(\hat{\phi}_m(x_m^{\ast}) - \hat{\mu}_m(x_m)\right)
+\end{align}
+
+followed by:
+\begin{align}
+    x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\phi}(x_i^l, \alpha, \CA)
+    \label{eq: mf_svgd_proposal_1}
+\end{align}
+where the subscript in $\phi_{(\cdot)}$ denotes the model used in the gradient estimate with the usual decomposition for $\phi$.
+
+\item Computing the repulsive force over all particles through usual single-fidelity MC without including it in the full multi-fidelity gradient estimator:
+\begin{align}
+        \tilde{\psi}(x, \alpha, \CA) = \tilde{\psi_0}(x_0) + \sum_{m=1}^M \alpha_m \left(\hat{\psi}_m(x_m^{\ast}) - \hat{\gamma}_m(x_m)\right)
+\end{align}
+followed by:
+\begin{align}
+    x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\psi}(x_i^l, \alpha, \CA) + \epsilon_l\left[\frac{1}{n}\sum_{j=1}^{n} \nabla_{x_j^l} k(x_j^l, x)\right]
+    \label{eq: mf_svgd_proposal_2}
+\end{align}
+where $\tilde{\psi}_{(\cdot)}$ is shorthand for $\left[\frac{1}{n_i} \sum_{j=1}^{n_i}k(x_j^l, x) \nabla_{x_j^l} \log p_i (x_j^l)\right]$ and $n_i$ denotes the fraction of particles out of $n$ particles used in the score computation for model $i$.
+\end{enumerate}
+
+Other choices that we do not focus on here may construct separate MF estimators for each term of the gradient, or alternately propose a nested estimator, where the partitioning is performed for the kernel computations, followed by an additional allocation step to models of different fidelities. We leave exploration of the implications resulting from these choices to future work and discuss the above choices in greater detail as a first step towards a multi-fidelity algorithm.
 
 
 
