@@ -520,6 +520,19 @@ Estimation of sparse covariance structures \citep{fop_model-based_2018} is of gr
 
 Our initial focus is on efficient evaluation of the score function through multi-fidelity setups that reduce the number of high-fidelity model-based likelihood evaluations, before considering a potential combination of the kernel and score approximation for future work.
 
+\subsection{Gradient-based MCMC Methods}
+
+SVGD differs from conventional gradient-based MCMC methods in its evolution of a co-ordinated particle ensemble instead of simulation of Markov chains with individual particles. In particular, the Euler-discretized Langevin dynamics simulates a Markov chain with the rule:
+
+\begin{equation}
+    x_{i+1} \leftarrow x_i + \frac{\epsilon}{2}\nabla \log p(x_i) + \epsilon \eta_i
+\end{equation}
+
+where $\eta_i \sim \CN(0, \epsilon)$ injects Gaussian noise at each step to prevent collapse to the MAP solution. 
+For Bayesian inference, Stochastic Gradient Langevin Dynamics (SGLD) \citep{welling_bayesian_2011,brosse_promises_2018} permits use of large-scale datasets through unbiased gradient estimators based on small mini-batches of the data, potentially augmented with control-variates for variance reduction. 
+While these approaches to Langevin dynamics are extremely relevant to discussions of variance reduction techniques for MCMC methods, the key ideas do not translate directly to the SVGD setting: instead of distributing workload amongst an ensemble of particles, these reduce the costs of likelihood evaluation conditioned on a particular realization of parameters $x$.
+
+
 \subsection{Approximate Control Variates for Multi-fidelity Estimation}\label{ss: acv}
 
 % \textcolor{red}{Stealing the text from acv with uq with some cuts}
@@ -935,7 +948,7 @@ followed by:
     x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\psi}(x_i^l, z_i^l, \alpha, \CA) + \epsilon_l\left[\frac{1}{n}\sum_{j=1}^{n} \nabla_{z_j^l} k(z_j^l, x)\right]
     \label{eq: mf_svgd_proposal_2}
 \end{align}
-where $\tilde{\psi}_{(\cdot)}$ is shorthand for $\left[\frac{1}{n_{(\cdot)}} \sum_{j=1}^{n_{(\cdot)}}k(z_j^l, \cdot) \nabla_{z_j^l} \log p_{(\cdot)} (z_j^l)\right]$ and $n_i$ denotes the fraction of particles out of $n$ particles used in the score computation for model $i$.
+where $\tilde{\psi}_{(\cdot)}$ is shorthand for $\left[\frac{1}{n_{(\cdot)}} \sum_{j=1}^{n_{(\cdot)}}k(z_j^l, \cdot) \nabla_{z_j^l} \log p_{(\cdot)} (z_j^l)\right]$, the so-called `confining term' \citep{ye_stein_2020} and $n_i$ denotes the fraction of particles out of $n$ particles used in the score computation for model $i$.
 \end{enumerate}
 
 Other choices that we do not focus on here may construct separate MF estimators for each term of the gradient, or build a nested estimator, where the partitioning is performed for the kernel computations, followed by an additional allocation step to models of different fidelities. 
