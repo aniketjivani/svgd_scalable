@@ -387,7 +387,8 @@ Stein's method was originally developed to approximate moment computations for s
 Various advancements in algorithms leveraging Stein operators have since found application in problems in hypothesis testing, information theory, optimal transport and inference. 
 A prominent example is Stein Variational Gradient Descent (SVGD), which relies on gradient-based updates using kernelized Stein discrepancy to deterministically transport particles and approximate a posterior distribution of model parameters in the process. 
 This is essentially non-parametric variational inference that is capable of approximating complex posterior distributions. 
-However, SVGD struggles to accomodate many-query evaluations of the likelihood function when a computationally expensive high-fidelity forward model is involved, which is very common in scientific applications.
+However, scalability of SVGD is limited by the cost of evaluation of target densities based on a computationally expensive high-fidelity forward model, which is very common in scientific applications. 
+In addition, the curse of dimensionality in kernel representation diminishes the accuracy of the method in high dimensions. 
 % In addition, the quadratic complexity of the kernel function evaluations makes posterior characterization with a very large number of particles infeasible. 
 In this work, we introduce a multifidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity models. 
 These typically take the form of multiple forward models with tractable likelihoods.
@@ -470,7 +471,7 @@ This is exploited to result in a deterministic, interpretable and simple inferen
 It can be used to characterize complex posterior distributions and is easily parallelizable. 
 
 
-Stein's method has also been extended recently to a measure transport framework under arbitrary transport map parametrization \citep{fisher_measure_2021}, using the Kernelized Stein Discrepancy (KSD) \citep{liu_kernelized_2016} as the objective instead of the traditional KL divergence.
+Stein's method has also been extended recently to a measure transport framework under arbitrary transport map parametrization \citep{fisher_measure_2021}, using the Kernelized Stein Discrepancy (KSD) \citep{liu_kernelized_2016} as the objective instead of the traditional KL divergence. The curse of dimensionality in the kernel representation has also been tackled through the lens of projected transport \citep{chen_projected_2020}, that only propagates low-dimensional projection coefficients to the posterior.
 
 Vanilla SVGD takes as input the target density function $p(x)$ and a set of initial particles $\{x_i^0\}_{i=1}^{n} \sim q_0(x)$ and returns a set of particles $\{x_i^L\}_{i=1}^{n}$ after L iterations that approximates the target distribution.
 
@@ -962,7 +963,7 @@ As the particles initialized with density $q_0$ are propagated towards the targe
 
 A method for offline pilot sampling is presented below. It relies on generating particles sequences under some choice of $p_i$ and number of pilot particles $N_p$. Then, keeping this sequence fixed, we recover the particle-wise weighted score function values at every step for all model fidelities. Finally, we summarize the particle-wise correlations based on the score function values to establish a fixed stepwise sample allocation. 
 
-We will use the simplest variation of ACV for our ACV-SVGD based framework that computes multi-fidelity estimates for a single output / scalar QoI. This implies that for a $d$-dimensional target posterior, the sample allocations for all update directions are computed based on optimal variance reduction in \emph{one} of the components of the gradient / velocity field. While this is by far the most scalable approach, there is also potential to exploit the correlations between gradient components for even greater variance reduction \citep{dixon_covariance_2024}. 
+We will use the simplest variation of ACV for our ACV-SVGD based framework that computes multi-fidelity estimates for a single output / scalar QoI. This implies that for a $d$-dimensional target posterior, the sample allocations for each update directions are computed separately based on optimal variance reduction in the respective components of the gradient / velocity field. While this is by far the most scalable approach, there is also potential to exploit the correlations between gradient components for even greater variance reduction \citep{dixon_covariance_2024}. 
 
 
 
