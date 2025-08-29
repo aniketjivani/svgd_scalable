@@ -404,33 +404,29 @@ to measure the gap between the density induced by SVGD particles at the final up
 The most general form of a multi-fidelity update for SVGD would partition the incremental transform in the style of ACVs so that particles are apportioned to target densities of different fidelities for computing the incremental transform at every iteration. 
 The key differences compared to the surrogate SVGD estimator we discussed in the previous section would stem from both the unbiasedness of the ACV estimator and the ability to accomodate arbitrary model ensembles with error-optimal particle allocations.
 
-Following the notation introduced in \autoref{ss: acv}, we can propose different versions of a multi-fidelity SVGD framework depending on the computation of the different forces making up the usual SVGD gradient.
-
-For a particle ensemble $\mathbf{x}^{(l)}$ at iteration $l$, , let $z_i^l=\mathbf{x}^{(l)} \setminus x_i^l$. \textcolor{red}{Not strictly correct notation, but makes it easier to digest the following equations}
-
+To ensure consistency with the notation introduced in \autoref{ss: acv}, we set $z_i^l \triangleq \mathbf{x}^{(l)} \setminus x_i^l$ for a particle ensemble $\mathbf{x}^{(l)}$ at iteration $l$. Then, we can propose different versions of a multi-fidelity SVGD framework depending on the computation of the different forces making up the usual SVGD gradient:
 \begin{enumerate}
 \item Collectively decomposing the kernel-weighted scores and the repulsive force terms:
 \begin{align}
-        \tilde{\phi}(x_i^l, z_i^l, \alpha, \CA) = \tilde{\phi_0}(x_i^l, z_0) + \sum_{m=1}^M \alpha_m \left(\hat{\phi}_m(x_i^l, z_m^{\ast}) - \hat{\mu}_m(x_i^l, z_m)\right)
+        \tilde{\phi}(x_i^l, z_i^l, \alpha, \CA) = \tilde{\phi_0}(x_i^l, z_0) + \sum_{m=1}^M \alpha_m \left(\hat{\phi}_m(x_i^l, z_m^{\ast}) - \hat{\mu}_m(x_i^l, z_m)\right),
 \end{align}
-
 followed by:
 \begin{align}
-    x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\phi}(x_i^l, z_i^l, \alpha, \CA)
+    x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\phi}(x_i^l, z_i^l, \alpha, \CA),
     \label{eq: mf_svgd_proposal_1}
 \end{align}
 where the subscript in $\phi_{(\cdot)}$ denotes the model used in the gradient estimate with the usual decomposition for $\phi$.
 
 \item Computing the repulsive force over all particles through usual single-fidelity MC without including it in the full multi-fidelity gradient estimator:
 \begin{align}
-        \tilde{\psi}(x_i^l, z_i^l, \alpha, \CA) = \tilde{\psi_0}(x_i^l, z_0) + \sum_{m=1}^M \alpha_m \left(\hat{\psi}_m(x_i^l, z_m^{\ast}) - \hat{\gamma}_m(x_i^l, z_m)\right)
+        \tilde{\psi}(x_i^l, z_i^l, \alpha, \CA) = \tilde{\psi_0}(x_i^l, z_0) + \sum_{m=1}^M \alpha_m \left(\hat{\psi}_m(x_i^l, z_m^{\ast}) - \hat{\gamma}_m(x_i^l, z_m)\right),
 \end{align}
 followed by:
 \begin{align}
-    x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\psi}(x_i^l, z_i^l, \alpha, \CA) + \epsilon_l\left[\frac{1}{n}\sum_{j=1}^{n} \nabla_{z_j^l} k(z_j^l, x)\right]
+    x_i^{l + 1} \leftarrow x_i^l + \epsilon_l\tilde{\psi}(x_i^l, z_i^l, \alpha, \CA) + \epsilon_l\left[\frac{1}{n}\sum_{j=1}^{n} \nabla_{(z_j^l, x_i^l)} k\left((z_j^l, x_i^l), x\right)\right],
     \label{eq: mf_svgd_proposal_2}
 \end{align}
-where $\tilde{\psi}_{(\cdot)}$ is shorthand for $\left[\frac{1}{n_{(\cdot)}} \sum_{j=1}^{n_{(\cdot)}}k(z_j^l, \cdot) \nabla_{z_j^l} \log p_{(\cdot)} (z_j^l)\right]$, the so-called `confining term' \citep{ye_stein_2020} and $n_i$ denotes the fraction of particles out of $n$ particles used in the score computation for model $i$.
+where $\tilde{\psi}_{(\cdot)}$ is shorthand for $\left[\frac{1}{n_{(\cdot)}} \sum_{j=1}^{n_{(\cdot)}}k\left((z_j^l, x_i^l), \cdot\right) \nabla_{(z_j^l, x_i^l)} \log p_{(\cdot)} \left((z_j^l, x_i^l)\right)\right]$, the so-called `confining force term' \citep{ye_stein_2020} and $n_i$ denotes the fraction of particles out of $n$ particles used in the score computation for model $i$.
 \end{enumerate}
 
 Other choices that we do not focus on here may construct separate MF estimators for each term of the gradient, or build a nested estimator, where the partitioning is performed for the kernel computations, followed by an additional allocation step to models of different fidelities. 
