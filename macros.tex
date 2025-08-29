@@ -1,0 +1,87 @@
+% Colors that are more readable for comments
+\definecolor{darkred}{rgb}{.7,0,0}
+\newcommand\Red[1]{\textcolor{darkred}{#1}}
+\definecolor{darkgreen}{rgb}{.15,.55,0}
+\newcommand\Green[1]{\textcolor{darkgreen}{#1}}
+\definecolor{darkblue}{rgb}{0,0,0.7}
+\newcommand\Blue[1]{\textcolor{darkblue}{#1}}
+
+
+
+% Personalized commenting.
+\newcommand{\ymm}[1]{\textcolor{darkgreen}{\textbf{(YMM:)} #1}}
+\newcommand{\ymtd}[1]{\todo[linecolor=darkgreen,backgroundcolor=darkgreen!25]{#1}}
+
+\newcommand{\xh}[1]{\textcolor{orange}{\textbf{(XH:)} #1}}
+\newcommand{\xhtd}[1]{\todo[linecolor=orange,backgroundcolor=orange!25]{#1}}
+
+\newcommand{\jjm}[1]{\textcolor{cyan}{\textbf{(JJM:)} #1}}
+\newcommand{\jjtd}[1]{\todo[linecolor=darkblue,backgroundcolor=darkblue!25]{#1}}
+
+
+
+% Variables.
+\newcommand{\design}{\xi}
+\newcommand{\Design}{\Xi}
+\newcommand{\pdf}{p}
+\newcommand{\policy}{\pi}
+\newcommand{\info}{I}
+\newcommand{\param}{\theta}
+\newcommand{\Param}{\Theta}
+\newcommand{\paramset}{\bm{\Theta}}
+\newcommand{\noise}{\epsilon}
+\newcommand{\Noise}{\mathcal{E}}
+\newcommand{\ExpLoss}{\overline{\mathcal{L}}}
+
+
+% Operators. 
+\newcommand{\Var}{\mathbb{V}\text{ar}}
+\newcommand{\Cov}{\mathbb{C}\text{ov}}
+\newcommand{\DKL}{D_{\text{KL}}}
+\newcommand{\tr}{\text{tr}}
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+\newcommand{\normdist}{\mathcal{N}}
+
+
+% mathcal
+\newcommand{\CA}{\mathcal{A}}
+\newcommand{\CF}{\mathcal{F}}
+\newcommand{\CH}{\mathcal{H}}
+\newcommand{\CM}{\mathcal{M}}
+\newcommand{\CN}{\mathcal{N}}
+\newcommand{\CS}{\mathcal{S}}
+\newcommand{\CX}{\mathcal{X}}
+\newcommand{\CL}{\mathcal{L}}
+
+
+% mathbb
+\newcommand{\EE}{\mathbb{E}}
+% \newcommand{\PP}{\mathbb{P}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand\prob{\mathbb{P}}
+
+% mathbf
+\newcommand{\bd}{\mathbf{d}}
+\newcommand{\bg}{\mathbf{g}}
+\newcommand{\bDelta}{\mathbf{\Delta}}
+
+% hat
+\newcommand{\hx}{\hat{x}}
+\newcommand{\hg}{\hat{g}}
+\newcommand{\hh}{\hat{h}}
+
+% bar
+\newcommand{\barh}{\bar{h}}
+
+
+\DeclareMathOperator\supp{supp}
+\newcommand{\etal}{\textit{et al.}}
+
+% \newcommand{\Var}{\textrm{Var}}
+% \newcommand{\Cov}{\textrm{Cov}}
+
+
+% algorithms
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}

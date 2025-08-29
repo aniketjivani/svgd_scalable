@@ -401,6 +401,26 @@
     \item (hopefully) success!
 \end{enumerate}
 
+\begin{enumerate}
+    \item Spectral Delta Kernels \cite{lazaro-gredilla_sparse_2010}
+
+    \item Active Subspace based reduction for BNNs \cite{jantre_learning_2023}
+
+    \item Continuous Normalizing Flows \cite{grathwohl_ffjord_2018}
+
+    \item Kernelized Normalizing Flows \cite{english_kernelised_2024}
+
+    \item SVGD as Gradient Flow \cite{liu_stein_2017}
+
+    \item Stein breakdown in high dimensions \cite{ba_towards_2019}
+
+    % \item Stein's Method for High Dimensions \cite{chang_kernel_2020} - while the paper is almost unreadable, the authors try to use ideas from score matching such as Anneal-SGLD on the vanilla SVGD procedure and find that the kernel choice is inadequate because the bandwidth is not changing with respect to the noise level. Their proposed kernel includes an autoencoder for dimensionality reduction and conditions the hyperparameters on $\sigma$.
+
+    \item Multilevel SVGD \cite{alsup_multilevel_2022}
+
+    \item Sparse Sinkhorn Attention \cite{tay_sparse_2020}
+\end{enumerate}
+
 \section{Literature}
 We motivate our method by first introducing the concepts of Stein discrepancy, Stein gradient descent, learning kernel operators from Gaussian Processes and the scope for introducing more scalable methods for the same. 
 
@@ -672,10 +692,270 @@ We can also address problems of inverse transport e.g. where the target density 
 
 \textcolor{red}{Iterative construction of maps to minimize KL}
 
+\section{Flow Matching}
+% \subsection{Flow Matching}
+
+Below, we briefly review the current practice in conditional flow matching algorithms and motivate their use in learning maps between samples from multiple-fidelity model likelihoods.
+
+Generative modeling tasks consider the problem of approximating and sampling from a probability distribution. For instance, continuous normalizing flows (CNFs) proposed in \cite{grathwohl_ffjord_2018} express an invertible mapping between a fixed and tractable source distribution and the data distribution using Neural Ordinary Differential Equations (NODEs). CNFs can be trained and scaled to larger datasets better through a regression of the ODE drift, a so-called Flow Matching (FM) objective. The advances proposed in \cite{tong_improving_2024} generalize the flow matching framework proposed by \cite{lipman_flow_2023} to use transport maps between arbitrary distributions and approximate the dynamic Optimal Transport problem during sampling of conditional paths to improve the efficiency of training and inference. 
+
+A smooth time-varying vector field $u: [0, 1] \times \RR^d \to \RR^d$ is defined by the following ordinary differential equation (ODE):
+\begin{equation}
+    dx = u(t, x)dt
+\end{equation}
+
+Given density $p_0$ over $\RR^d$, if $\phi_t(x)$ is the solution for the above ODE (i.e. it denotes the position of point $x$ transported along $u$ from time $0$ up to time $t$), this integration map introduces a pushforward density $p_t$ ($p_t$ is the density of points $x \sim p_0$ transported along $u$ from time 0 to time $t$) that is characterized by the continuity equation:
+
+\begin{equation}
+    \frac{\partial p}{\partial t} = -\grad.\left(p_t u_t\right)
+\end{equation}
+
+We can characterize the marginal probability path $p_t$ as a mixture of conditional probability paths:
+
+\begin{equation}
+    p_t(x) = \int p_t(x | z) q(z) dz
+\end{equation}
+
+If a path $p_t(x|z)$ is generated from $u_t(x | z)$ from initial conditions $p_0(x | z)$, then the vector field $u_t(x)$ given by:
+
+\begin{equation}
+    u_t(x) = \EE_{q(z)}\left[\frac{u_t(x|z)p_t(x|z)}{p_t(x)}\right]\label{eq: marg_cond_velocity_field}
+\end{equation}
+
+generates probability path $p_t(x)$ from initial conditions $p_0(x)$.
+
+The key ideas behind flow matching rely on this connection between marginal vector fields and marginal probability paths to decompose the intractable marginal vector field into conditional vector fields.
+
+The original flow matching objective considered in \cite{lipman_flow_2023} is intractable for general source density $q_0$ mapping to target $q_1$:
+
+\begin{equation}
+    \CL_{\text{FM}}(\theta)= \EE_{t \sim \mathcal{U}(0, 1), x \sim p_t(x)} ||v_\theta(t, x) - u_t(x)||^2
+\end{equation}
+
+In the special case where the marginal densities $p_t(x) = \CN(x | \mu_t, \sigma_t^2)$ are Gaussian, a possible simple (but non-unique) ODE satisfies:
+
+\begin{equation}
+    \phi_t(x_0) = \mu_t + \sigma_t \left(\frac{x_0 - \mu_0}{\sigma_0}\right) \label{eq: gaussian_ode_sol}
+\end{equation}
+
+and the unique vector field whose integration map satisfies \eqref{eq: gaussian_ode_sol} has the form:
+
+\begin{equation}
+    u_t(x) = \frac{\sigma_t'}{\sigma_t} (x - \mu_t) + \mu_t' \label{eq: vector_field_gauss_dens}
+\end{equation}
+
+where $\sigma_t'$ and $\mu_t'$ denote the time derivatives of $\sigma_t$ and $\mu_t$ respectively, and the vector field $u$ with initial conditions $\CN(\mu_0, \sigma_0^2)$ generates the Gaussian probability path $p_t(x) = \CN(x | \mu_t, \sigma_t^2)$.
+
+The flow matching loss under assumptions of existence and exchange of different integrals, and boundedness of the solution fields can be switched out for an easier-to-regress conditional flow matching loss with the loss gradient only changing by a constant factor that is independent of $\theta$:
+
+\begin{equation}
+    \CL_{\text{CFM}}(\theta) = \EE_{t, q(z), p_t(x|z)}||v_\theta(t, x) - u_t(x|z)||^2 \label{eq: cfm_loss}
+\end{equation}
+
+For all practical purposes, we can solve the much more useful CFM objective, under the condition that we can:
+
+\begin{enumerate}
+    \item Sample from $q(z)$
+
+    \item Sample from $p_t(x|z)$
+
+    \item Calculate $u_t(x|z)$
+\end{enumerate}
+
+\begin{equation}
+    \nabla_{\theta}\CL_{\text{FM}}(\theta) =\nabla_{\theta}\CL_{\text{CFM}}(\theta) \label{eq: cfm_fm_grad}
+\end{equation}
+
+A short proof of this is provided below from \cite{tong_improving_2024}:
+
+\begin{align*}
+    \grad_{\theta}\EE_{p_t(x)}||v_\theta(t, x) - u_t(x)||^2 &= \grad_\theta \EE_{p_t(x)}(||v_\theta(t, x)||^2 - 2\langle v_\theta(t, x) u_t(x)\rangle) \quad \textcolor{red}{\text{($u_t(x)
+    $ does not depend on $\theta$})}
+\end{align*}
+
+
+\begin{align*}
+    \grad_{\theta}\EE_{q(z),p_t(x|z)}||v_\theta(t, x) - u_t(x, z)||^2 &= \EE_{q(z), p_t(x|z)}\grad_{\theta}(||v_\theta(t, x)||^2 - 2 \langle v_\theta(t, x) , u_t(x|z)\rangle)
+\end{align*}
+
+The first term in each loss function can be reparametrized as:
+\begin{equation*}
+    \EE_{p_t(x)}||v_\theta(t, x)||^2 = \iint ||v_\theta(t, x)||^2 p_t(x|z)q(z)dz dx = \EE_{q(z), p_t(x|z)}||v_\theta(t, x)||^2
+\end{equation*}
+
+while we substitute \eqref{eq: marg_cond_velocity_field} in the inner product expression for FM to recover the CFM inner product and thus equalize the loss gradients:
+
+\begin{align*}
+    \EE_{p_t(x)}\langle v_\theta(t, x), u_t(x)\rangle &= \int \biggl<v_\theta(t, x), \frac{\int u_t(x|z)p_t(x|z)q(z)dz}{p_t(x)}\biggr>p_t(x)dx \\
+    &=\iint \langle v_\theta(t, x), u_t(x|z)\rangle p_t(x|z)q(z)dzdx \quad \textcolor{red}{\text{(inner product distributed over integral argument)}}\\
+    &=\EE_{q(z), p_t(x|z)}\langle v_\theta(t, x) u_t(x | z) \rangle
+\end{align*}
+
+\medskip
+\emph{I-CFM (via Independent Coupling):}
+For source point $x_0$ and target point $x_1$:
+
+\begin{enumerate}
+    \item $q(z) = q(x_0)q(x_1)$
+
+    \item $p_t(x|z) = \CN(x | tx_1 + (1 - t)  x_0, \sigma^2)$
+
+    \item Using \eqref{eq: vector_field_gauss_dens} for the conditional vector field with $\mu_t = tx_1 + (1 - t)x_0 $ and $\sigma_t = \sigma$, $u_t(x|z) = x_1 - x_0$
+\end{enumerate}
+
+\medskip
+\emph{OT-CFM (sampling via OT Map):}
+
+The key difference from I-CFM is that instead of $x_0, x_1$ being sampled independently from their marginal distributions, they are sampled jointly according to the optimal transport map $\pi$:
+
+$$q(z) = \pi(x_0, x_1)$$
+
+In cases where a static OT plan is computationally infeasible to determine exactly, a minibatch OT approximation \citep{fatras_learning_2020} shows improvements over random sampling plans in terms of model performance and training times. 
+Related work such as that of \cite{finlay_how_2020} use a regularized CNF with dynamic OT objectives though these are difficult to train and scale.
+
+
+\emph{SB-CFM (entropy-regularized OT map):}
+Recent efforts such as \citep{de_bortoli_diffusion_2021,heng_diffusion_2024} have also focused on efficient inference in diffusion models and general Bayesian computation by reformulating them as a Schrödinger bridge (SB) problem where the forward process need not be run for large number of steps to ensure $p_N = p_{\text{prior}}$. 
+The static SB problem can be seen as an entropy-regularized quadratic cost OT problem that is an attractive choice for high-dimensional OT between arbitrary data distributions. 
+These can be applied to an entropic variant of OT-CFM, SB-CFM, to match probability flow of a Schrödinger bridge with a Brownian motion refererence process.
+
+The SB problem seeks a process $\pi$ that is closest to the initial time marginal $p_{\text{ref}}$ while having initial and terminal marginal distributions specified by $q(x_0)$ and $q(x_1)$ respectively i.e.:
+\begin{equation*}
+\pi^{\ast} = \argmin_{\pi(x_0) = q(x_0), \pi(x_1)=q(x_1)} \DKL(\pi, p_{\text{ref}})
+\end{equation*}
+
+Then the above solution can be recovered through the marginal vector field $u_t(x)$ defined via:
+
+\begin{enumerate}
+\item $q(z) = \pi_{2\sigma^2}(x_0, x_1)$ where $\pi_{2\sigma^2}(x_0, x_1)$ solves the entropy-regularized optimal transport problem with cost $||x_0 - x_1||$ and regularization $\lambda = 2\sigma^2$
+
+\item $p_t(x|z) = \CN(x | tx_1 + (1 - t)x_0, t(1-t)\sigma^2$ \textcolor{red}{(Brownian bridge between $x_0$ and $x_1$)}
+
+\item $u_t(x|z) = \frac{1 - 2t}{2t(1-t)}\left(x - (tx_1 + (1 - t) x_0) \right) + (x_1 - x_0)$
+\end{enumerate}
+
+The ability to establish correlations through reasonably sized pilot datasets may be enhanced through the use of flow matching. 
+In cases where the high-fidelity model can only be evaluated a limited number of times, the flow matching surrogate can enable a fast mapping from the particles propagated under a lower-fidelity model likelihood to those under the highest fidelity likelihood. 
+Moreover, it can be parametrized to use particles based on multiple lower-fidelity models for even greater savings.
+
 \section{Results}
 
 \section{Conclusions}
 
+
+% \textcolor{red}{Online vs offline pilot sampling for correlations. To get correlations avg over all neighbours vs compute for individual neighbours? ACV mean should change based on x particle, though the score remain unchanged for a fixed sample allocation and also rewrite notation $\phi(x)$}
+
+
+
+% \begin{equation*}
+%     \theta^{(0)}_i \leftarrow \theta^{(0)}_i + \epsilon \phi^{\ast}(\theta^{(0)})
+% \end{equation*}
+
+% And similarly, for lower-fidelity models indexed from $1$ to $m$, we can compute the particle positions as:
+
+% \begin{equation*}
+%     \theta^{(l)}_i \leftarrow \theta^{(l)}_i + \epsilon \phi^{\ast}(\theta^{(l)}), \quad l=1, \cdots, m
+% \end{equation*}
+
+% where
+
+% \begin{align}
+%     \phi^{\ast}(\theta^{(0)}) &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{0} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
+%     &= \frac{1}{M^{(0)}}\sum_{j=1}^{M^{(0)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
+%     &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{0} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
+% \end{align}
+
+% \begin{align}
+%     \phi^{\ast}(\theta^{(l)}) &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[k(\theta_j, \theta) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \grad_{\theta_j} k(\theta_j, \theta)] \\
+%     &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber \\
+%     &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)] + \log p(\theta_j)]] + \grad_{\theta_j} k(\theta_j, \theta) \nonumber \\ 
+%     &= \frac{1}{M^{(l)}}\sum_{j=1}^{M^{(l)}}[(k(\theta_j, \theta^{(0)})  + k(\theta_j, \theta^{(1)}) + \cdots + \nonumber\\ 
+%     &k(\theta_j, \theta^{(m)})) \grad_{\theta_j}[L_{l} + \log p(\theta_j)]] + \grad_{\theta_j} [k(\theta_j, \theta^{(0)}) + \cdots + k(\theta_j, \theta^{(m)})]\\ \nonumber
+% \end{align}
+
+% While the $M$ particles are allocated to different models as $M_0, M_1, \cdots, M_m$, the above updates still use all the particles to compute the map at each iteration - this introduces interactions between the multifidelity particles in \stkout{\emph{both} terms of the update: the first term driving the particles to regions of high-probability} \textcolor{red}{(unfortunately, this is not true. When you cut off the kernel matrix to remove the particle interactions amongst the other fidelities, it turns out that only the particle distances corresponding to that fidelity weigh the likelihood)} the second term of the update accounting for the repulsive force that prevents particle collapse into local modes. 
+% The repulsive force i.e. the kernel gradient evaluates a shared kernel function over different subsets of $\theta$ in each term, while the force driving particles towards high-probability regions weighs the kernel function by the individual log-likelihoods.
+% \textcolor{red}{Interestingly, another algorithmic choice here is the choice of particle positions to use in a given fidelity's updates. For example, if we updated the low-fidelity particle's positions first, these updates could be transmitted to and used by the high fidelity update mechanism in the same step instead of both updates using previously computed positions.}
+
+% The above formulation continues to allow flexibility with regards to the specification and the number of lower-fidelity model; but it also raises additional open questions regarding the following aspects:
+
+% \begin{enumerate}
+%     \item The choice of the kernel function for individual model fidelities
+
+%     \item The allocation of particles to different model fidelities (disjoint / overlapping) and how it changes as we step through the method.
+
+%     \item The number and allocation of particles used in computations of the kernel function i.e. neighbourhood selection for particles.
+
+%     \item The frequency of updates to particles of different fidelities, and the update sharing frequency within a single iteration of the outer loop.
+
+%     \item The stopping criterion that assesses convergence to the target distribution.
+
+%     \item Quantitative measurements of discrepancy between distributions fitted via single-fidelity and multiple-fidelity methods.
+% \end{enumerate}
+
+% \subsection{KL-Divergence Based Correction with kNN Estimator}
+
+
+
+
+
+% Perhaps the more pertinent question before we discuss the finer details of the implementation is why we expect this to work at all. Consider the elementary case where we only have access to a single model for likelihood computation. 
+% There are two possible bottlenecks: 1. the full data log-likelihood computation is prohibitive on account of the need to process very large-scale data, requiring the modification of standard inference algorithms to handle distributed or streaming data settings 2. the high costs of running the forward model renders the inference intractable without resorting to surrogate approximations. 
+
+% A prominent line of work that deals with the first case uses the so-called `consensus Monte Carlo methods' \citep{rabinovich_variational_2015,scott_bayes_2016}. Here a data sharding (partitioning) step is followed by independent posterior sampling on multiple machines conditioned on the data partitions. 
+% The communication overhead is avoided by combining the posterior draws to form a `consensus' belief about the model unknowns.
+% The algorithm is exact for Gaussian posteriors, but has been found to be broadly useful for non-Gaussian settings too.
+
+% Rather than modifying the inference algorithm, practitioners have recently focused on exploiting redundancies in the dataset by identifying a weighted subset of the data known as the \emph{coreset}, that originated in computational geometry \citep{agarwal_geometric_2007} and later found popularity in scalable clustering methods.
+% Discussions on Bayesian coreset methods \citep{huggins_coresets_2016,campbell_automated_2019} focus on high-probability guarantees for the approximation quality of the resulting log-likelihood and demonstrate their superior performance over random subsampling methods. A superficial analogy we can draw is the treatment of the high-fidelity particles as our coreset, and the kernel function that accounts for all model fidelities as a means to enforce a weighted log-likelihood.
+
+% Akin to coresets, the concept of `graph coarsening' is ubiquitous all across scientific computing and machine learning methods for graph representation \citep{chen_graph_2022}. The goal of graph coarsening is to uncover a smaller graph that faithfully reflects the structure of the original graph. The coarse graph/s is/are typically determined using notions of pairwise similarity, algebraic distance, independent sets, sketching based on leverage scores and other criteria. 
+% In this framework, we can treat the selection of high-fidelity particles as a form of graph coarsening, if the features for these particles are constructed from aggregation of lower-fidelity particles rather than assignment of existing particles.
+
+% While these techniques do not directly relate to the workings or performance of our proposed method relying on the non-parametric version of the SVGD method, they serve as useful guiding principles to improve practical implementations which typically rely on random particle subsampling for efficient kernel computations. 
+
+% A simpler analogy arises from the purview of dynamical systems: the asymptotic behaviour of SVGD is characterized by the Vlasov equation \citep{liu_stein_2017}. 
+% Then, deploying a multistep predictor-corrector method to solve the resulting ordinary differential equation would be akin to performing a sequence of low-fidelity predictions for particle positions to serve as the initial guess, followed by a correction step for some or all particles via the high-fidelity likelihood i.e. the fidelity assignment \emph{alternates} rather than preceding or following the model updates .
+% The benefits of such an approach would be practically realized when the equivalent cost in terms of single-fidelity evaluations is measurably brought down in implementations. 
+% However, determination of `when to correct, what to correct' is also a non-trivial problem.
+
+% In the following sections, we will lay out a framework to evaluate some of these key choices and provide more details of our proposed method.
+
+% \subsection{Particle assignment to various fidelities}
+
+% \emph{Method 0: Non-randomized Assignment}
+% The simplest possible setting does not attempt to reassign particles, instead, at every iteration, a fixed proportion of the particles is treated as the lower-fidelity likelihood update while the remaining are high-fidelity updates. 
+% We look at the number of iterations required for convergence by monitoring the hyperparameters of the kernel function.
+
+% \noindent \emph{Method 1: Randomized Assignment}
+% To correct for possible bias due to incorrect particle assignment, randomized assignment shuffles the particles between the different fidelities after one or more update steps.
+
+% \noindent \emph{Method 2: Assignment based on clustering methods}
+% For the first time, we consider the setting where a small subset of particles is deemed to be non-redundant and a summarization of the dataset. Here, we incorporate a clustering-based heuristic that determines the high-fidelity particles based on a suitable measure of distance.
+% It is of particular importance to ensure that the cost of pairwise distance computations does not grow or outweigh the cost of simpler methods such as randomized assignment i.e. there is possibility of reuse for these when we actually perform the Stein updates.
+
+
+% \noindent \emph{Method 3: Resource allocation using model correlations}
+
+% \subsection{Graph Network Based Propagation}
+% Deep learning methods that model arbitrary relational structures between elements, such as graph networks (GNs), are surveyed in \cite{battaglia_relational_2018}. 
+
+% GNs model a domain by decomposing it into a graphical representation $\CG=\{\CV, \CE\}$ - nodes $\CV$ that represent individual features and edges $\CE$ that describe directed or undirected interactions between nodes. 
+% The learning proceeds by first defining a neighbourhood for individual nodes. This is followed by a message-passing block that updates node features based on aggregating interactions with all or a subset of its possible neighbours. Chaining several such blocks with intermediate nonlinear activations results in a GN which accepts an arbitrarily sized graph as input and returns either a transformed graph or some global property of the graph as the output. 
+
+% Superficially translating the graphical representation to a particle-based updates / normalizing flow setup suggests the propagation of augmented node features $[x, \log p(x)]$ where both the particle positions $x$ and their log-likelihoods $\log p(x)$ are updated as they pass through the message-passing blocks. Two key advantages offered by graph-based methods are their inherent invariance to permutations (unlike MLPs) and their ability to operate on graphs of arbitrary sizes without modifications to the architecture. 
+% This feature translates to so-called `discretization invariance' in expressive methods for learning PDEs such as neural operators \citep{Li2020} which exhibit good generalization properties even when trained on low-resolution data. GNs have been successfully used to simulate complex physics with long rollout times, e.g. \cite{sanchez-gonzalez_learning_2020}.
+
+% Without additional constraints however, a GN is not directly compatible with the workflow of particle-based methods for inference, where the key goal is to constrain the transport of individual particles by minimizing a particular discrepancy function that characterizes the quality of the posterior approximation. 
+% It is also unclear if the discretization-invariance property grants any advantages in better representation of the posterior density in low-data settings. 
+% However, the advances in scaling GNs to very large graphs with millions of nodes suggest opportunities to influence the development of scalable particle methods for inference and offer a more flexible workflow. 
+% We begin with a brief overview of our proposed changes below:
+
+% \subsection{Particle Swarm Optimization based methods}
+% (with a specific interest in multi-population cooperative particle swarm optimization, even though we are not specifically targeting optimization) - see \url{https://ieeexplore.ieee.org/document/9967774} for an example.
+
+
+% \subsection{Sparse Kernel Updates}
 
 \bibliography{local,references}
 

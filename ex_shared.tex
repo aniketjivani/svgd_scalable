@@ -9,12 +9,24 @@
 \usepackage{amsfonts}
 \usepackage{graphicx}
 \usepackage{epstopdf}
-\usepackage{algorithmic}
+\usepackage{soul}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{enumitem}
+\usepackage{comment}
 \ifpdf
   \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg}
 \else
   \DeclareGraphicsExtensions{.eps}
 \fi
+
+% \usepackage[dvipsnames,x11names]{xcolor}
+
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{annotate-equations}
 
 % Prevent itemized lists from running into the left margin inside theorems and proofs
 \usepackage{enumitem}
@@ -31,21 +43,22 @@
 \newsiamthm{claim}{Claim}
 
 % Sets running headers as well as PDF title and authors
-\headers{Multi-fidelity SVGD}{A. Jivani, T. Coons, X. Huan}
+% \headers{Utilizing Covariance Uncertainty in Multi-fidelity Estimation with Approximate Control Variates}{T. Coons, A. Jivani, and X. Huan}
+
+\headers{Multifidelity SVGD}{A. Jivani, T. Coons and X. Huan}
 
 % Title. If the supplement option is on, then "Supplementary Material"
 % is automatically inserted before the title.
-% \title{An Example Article\thanks{Submitted to the editors DATE.
-% \funding{This work was funded by the Fog Research Institute under contract no.~FRI-454.}}}
-
+% \title{Utilizing Covariance Uncertainty in Multi-fidelity Estimation with Approximate Control Variates\thanks{Submitted to the editors DATE.
+% \funding{Enter funding sources!}}}
 \title{Scalable Stein Variational Gradient Descent via Multifidelity Particle Transport with Application to Bayesian Inference\thanks{Submitted to the editors DATE.
 \funding{This work is supported in part by the National Science Foundation Graduate Research Fellowship under Grant No. DGE 1841052, the Department of Navy award N00014-23-1-2735 issued by the Office of Naval Research, and through computational resources and services provided by Advanced Research Computing at the University of Michigan, Ann Arbor.}}}
 
 % Authors: full names plus addresses.
-\author{Aniket Jivani \thanks{Department of Mechanical Engineering, University of Michigan, Ann Arbor, MI, 48109 
-  (Correspondence: \email{ajivani@umich.edu}).}
-\and Thomas E. Coons \footnotemark[2]
-\and Xun Huan \footnotemark[2]}
+\author{Aniket Jivani\thanks{Department of Mechanical Engineering, University of Michigan, Ann Arbor, MI 48109 
+  (\email{ajivani@umich.edu}, \url{https://me.engin.umich.edu/}).}
+\and Thomas E. Coons\footnotemark[2]
+\and Xun Huan\footnotemark[2]}
 
 \usepackage{amsopn}
 \DeclareMathOperator{\diag}{diag}
@@ -73,3 +86,81 @@
 %%% mode:latex
 %%% TeX-master: "ex_article"
 %%% End: 
+
+
+
+% % SIAM Shared Information Template
+% % This is information that is shared between the main document and any
+% % supplement. If no supplement is required, then this information can
+% % be included directly in the main document.
+
+
+% % Packages and macros go here
+% \usepackage{lipsum}
+% \usepackage{amsfonts}
+% \usepackage{graphicx}
+% \usepackage{epstopdf}
+% \usepackage{algorithmic}
+% \ifpdf
+%   \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg}
+% \else
+%   \DeclareGraphicsExtensions{.eps}
+% \fi
+
+% % Prevent itemized lists from running into the left margin inside theorems and proofs
+% \usepackage{enumitem}
+% \setlist[enumerate]{leftmargin=.5in}
+% \setlist[itemize]{leftmargin=.5in}
+
+% % Add a serial/Oxford comma by default.
+% \newcommand{\creflastconjunction}{, and~}
+
+% % Used for creating new theorem and remark environments
+% \newsiamremark{remark}{Remark}
+% \newsiamremark{hypothesis}{Hypothesis}
+% \crefname{hypothesis}{Hypothesis}{Hypotheses}
+% \newsiamthm{claim}{Claim}
+
+% % Sets running headers as well as PDF title and authors
+% \headers{Multi-fidelity SVGD}{A. Jivani, T. Coons, X. Huan}
+
+% % Title. If the supplement option is on, then "Supplementary Material"
+% % is automatically inserted before the title.
+% % \title{An Example Article\thanks{Submitted to the editors DATE.
+% % \funding{This work was funded by the Fog Research Institute under contract no.~FRI-454.}}}
+
+% \title{Scalable Stein Variational Gradient Descent via Multifidelity Particle Transport with Application to Bayesian Inference\thanks{Submitted to the editors DATE.
+% \funding{This work is supported in part by the National Science Foundation Graduate Research Fellowship under Grant No. DGE 1841052, the Department of Navy award N00014-23-1-2735 issued by the Office of Naval Research, and through computational resources and services provided by Advanced Research Computing at the University of Michigan, Ann Arbor.}}}
+
+% % Authors: full names plus addresses.
+% \author{Aniket Jivani \thanks{Department of Mechanical Engineering, University of Michigan, Ann Arbor, MI, 48109 
+%   (Correspondence: \email{ajivani@umich.edu}).}
+% \and Thomas E. Coons \footnotemark[2]
+% \and Xun Huan \footnotemark[2]}
+
+% \usepackage{amsopn}
+% \DeclareMathOperator{\diag}{diag}
+
+
+% %%%% HELPER CODE FOR DEALING WITH EXTERNAL REFERENCES ON OVERLEAF
+% % (from an answer by cyberSingularity at http://tex.stackexchange.com/a/69832/226)
+% %%%
+% \makeatletter
+% \newcommand*{\addFileDependency}[1]{% argument=file name and extension
+%   \typeout{(#1)}% latexmk will find this if $recorder=0 (however, in that case, it will ignore #1 if it is a .aux or .pdf file etc and it exists! if it doesn't exist, it will appear in the list of dependents regardless)
+%   \@addtofilelist{#1}% if you want it to appear in \listfiles, not really necessary and latexmk doesn't use this
+%   \IfFileExists{#1}{}{\typeout{No file #1.}}% latexmk will find this message if #1 doesn't exist (yet)
+% }
+% \makeatother
+
+% \newcommand*{\myexternaldocument}[1]{%
+%     \externaldocument{#1}%
+%     \addFileDependency{#1.tex}%
+%     \addFileDependency{#1.aux}%
+% }
+% %%% END HELPER CODE
+
+% %%% Local Variables: 
+% %%% mode:latex
+% %%% TeX-master: "ex_article"
+% %%% End: 
