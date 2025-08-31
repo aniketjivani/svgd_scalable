@@ -207,7 +207,7 @@ Independent of the update procedure and the hyperparameters, the major bottlenec
 The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, they form a class of single-fidelity SVGD variants and do not consider reduction in cost of an individual forward model evaluation that underlies the likelihood definition.
 
 
-The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. One simple example is propagation of an initial set of particles towards a bimodal target density, visualized in \autoref{fig:cov_structure}. Since particles assume memberships of separate clusters, this introduces some structure and potentially sparsity in the covariance matrix, which may be exploited to bring down the cost from \autoref{it: kernel_cost}.
+The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. One simple example is propagation of an initial set of particles towards a bimodal target density, visualized in Figure~\ref{fig:cov_structure}. Since particles assume memberships of separate clusters, this introduces some structure and potentially sparsity in the covariance matrix, which may be exploited to bring down the total kernel evaluation cost.
 
 \begin{figure}[htbp]
     \centering
@@ -248,7 +248,7 @@ where $z^{(j)} \sim p(Z)$ are independent and identically distributed (i.i.d.) s
 To reduce the estimator variance, multi-fidelity methods leverage an ensemble of low-fidelity models whose outputs are correlated with the high-fidelity model of interest but with diminished costs. 
 
 Control variates (CVs) are a widely used classical method for variance reduction in Monte-Carlo methods. 
-The general approach is to identify another function $f_1$, such that the traditional expected value estimator described in \autoref{eqn:mc} can be replaced by one constructed with $f_0 - f_1$, with smaller variance. The function $f_1$ is then referred to as a control variate. 
+The general approach is to identify another function $f_1$, such that the traditional expected value estimator described in Equation~\ref{eqn:mc} can be replaced by one constructed with $f_0 - f_1$, with smaller variance. The function $f_1$ is then referred to as a control variate. 
 Typically, selection of $f_1$ (generalized to selection of $\{f_i\}, i=1, \cdots, M$) and identifying a rich set of candidate CVs is a non-trivial procedure barring the exceptions where CVs can be identified from domain knowledge. 
 Linear transformations of the score function have been one of the popular choices given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods with gradient information and marginalization of hyperparameters \citep{papamarkou_zero_2014,oates_control_2017}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators.
 % \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
@@ -364,7 +364,7 @@ is the empirical evaluation of $\mathbb{S}(q, p)$, which can be estimated throug
 % We assess the performance of each SVGD variant through the Kernelized Stein Discrepancy (KSD), which represents the maximum violation of Stein's identity when the expectation is computed under $q$ instead of $p$ and therefore avoids explicit integration under the target. 
 
 Theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). 
-In examples showcasing SVGD, we use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ in the KSD estimator, in line with their recommendations, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in \autoref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
+In examples showcasing SVGD, we use the Inverse Multiquadric (IMQ) Kernel i.e. $k(x, x') = (c^2 + ||x - x'||_2^2)^\beta$ in the KSD estimator, in line with their recommendations, with $\beta=-1/2$ and $c=1$. A comparison of the IMQ and RBF kernel basis functions is shown in Figure~\ref{fig:imq_vs_rbf}, with the RBF kernel defined as $k(x, x') = \exp(-||x - x'||_2^2 / h^2)$.
 
 Our initial demonstrations do not specify an explicit prior and likelihood but instead evaluate the effectiveness of the proposed estimator on an ensemble of closed-form target density functions. We show an example of mapping from an initial set of particles to a Gaussian mixture high-fidelity target density, while leveraging a lower-fidelity density $p_1$ which corresponds to one of the modes.
 \begin{align}
@@ -404,7 +404,7 @@ to measure the gap between the density induced by SVGD particles at the final up
 The most general form of a multi-fidelity update for SVGD would partition the incremental transform in the style of ACVs so that particles are apportioned to target densities of different fidelities for computing the incremental transform at every iteration. 
 The key differences compared to the surrogate SVGD estimator we discussed in the previous section would stem from both the unbiasedness of the ACV estimator and the ability to accomodate arbitrary model ensembles with error-optimal particle allocations.
 
-To ensure consistency with the notation introduced in \autoref{ss: acv}, we set $z_i^l \triangleq \mathbf{x}^{(l)} \setminus x_i^l$ for a particle ensemble $\mathbf{x}^{(l)}$ at iteration $l$. Then, we can propose different versions of a multi-fidelity SVGD framework depending on the computation of the different forces making up the usual SVGD gradient:
+To ensure consistency with the notation introduced in subsection~\ref{ss: acv}, we set $z_i^l \triangleq \mathbf{x}^{(l)} \setminus x_i^l$ for a particle ensemble $\mathbf{x}^{(l)}$ at iteration $l$. Then, we can propose different versions of a multi-fidelity SVGD framework depending on the computation of the different forces making up the usual SVGD gradient:
 \begin{enumerate}
 \item Collectively decomposing the kernel-weighted scores and the repulsive force terms:
 \begin{align}
@@ -473,9 +473,9 @@ We use the simplest variation of ACV for our ACV-SVGD based framework that compu
 \end{algorithmic}
 \end{algorithm}
 
-An alternate approaches involves constructing a biased estimate of $\hat{C}^{(l)}$ by using gradients computed for all particles directly i.e. $K\nabla_{\mathbf{x}}\log p_i$. An example of the same is shown for an ensemble of Gaussian target densities, with $N_p=32$, $\epsilon=0.1$ and a synthetic cost vector $w=[1, 0.75, 0.25]$, from which the total budget is set to $B=64 \cdot \sum_i w_i$. The target $p_1$ is used to compute $S_x$.
+An alternate approaches involves constructing a biased estimate of $\hat{C}^{(l)}$ by using gradients computed for all particles directly i.e. $K\nabla_{\mathbf{x}}\log p_i$. We illustrate these results in Figure~\ref{fig:svgd_gaussians_pilot_corrs} via an ensemble of Gaussian target densities, with $N_p=32$, $\epsilon=0.1$ and a synthetic cost vector $w=[1, 0.75, 0.25]$, from which the total budget is set to $B=64 \cdot \sum_i w_i$. The target $p_1$ is used to compute $S_x$.
 
-In \autoref{fig:svgd_gaussians_pilot_corrs}, we show the log-densities of each of the ensemble members and the stepwise correlation estimates from the approach of Algorithm~\ref{alg: pilot_sampling_non_adaptive} as well as the alternate approximation, the former of which is more conservative in the correlation estimates.
+We show the log-densities of each of the ensemble members and the stepwise correlation estimates from the approach of Algorithm~\ref{alg: pilot_sampling_non_adaptive} as well as the alternate approximation, the former of which is more conservative in the correlation estimates.
 
 Our next steps will include testing various approaches to pilot sampling, including an online covariance estimation step, where a subset of propagated $N$ particles can be evaluated instead of an independent offline pilot set. 
 Finally, single-output and multiple output ACV estimators will be compared alongside the surrogate bifidelity estimator in various settings to establish the efficacy of the multi-fidelity framework. 
