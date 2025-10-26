@@ -1,0 +1,316 @@
+% SIAM Article Template
+\documentclass[review,onefignum,onetabnum]{siamonline250106}
+
+% Information that is shared between the article and the supplement
+% (title and author information, macros, packages, etc.) goes into
+% ex_shared.tex. If there is no supplement, this file can be included
+% directly.
+
+\input{notes_description}
+
+% Optional PDF information
+\ifpdf
+\hypersetup{
+  pdftitle={SVGD Notes},
+  % pdfauthor={A. Jivani, T. Coons, and X. Huan}
+}
+\fi
+
+% The next statement enables references to information in the
+% supplement. See the xr-hyperref package for details.
+
+%% Use \myexternaldocument on Overleaf
+\myexternaldocument{ex_supplement}
+
+% FundRef data to be entered by SIAM
+%<funding-group>
+%<award-group>
+%<funding-source>
+%<named-content content-type="funder-name"> 
+%</named-content> 
+%<named-content content-type="funder-identifier"> 
+%</named-content>
+%</funding-source>
+%<award-id> </award-id>
+%</award-group>
+%</funding-group>
+
+% \documentclass[12pt]{article}
+% \usepackage{graphicx} % Required for inserting images
+% \usepackage[utf8]{inputenc}
+
+%%% tikz & libraries
+\usepackage{tikz}
+\usepackage{multirow}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{arrows,shapes}
+\usetikzlibrary{tikzmark} % for \tikzmarknode
+% \usetikzlibrary{calc} % for computing the midpoint between two nodes, e.g. at ($(p1.north)!0.5!(p2.north)$) 
+
+% Commands for Highlighting text -- non tikz method
+\newcommand{\highlight}[2]{\colorbox{#1!17}{$#2$}}
+\newcommand{\highlightdark}[2]{\colorbox{#1!47}{$#2$}}
+%%% NOTE: \colorbox sets the second argument in text mode, so for use within equations we wrap it in $ $ again
+% if you use \highlight or \highlightdark in subscripts, you need to pass \scriptstyle to get the font size right
+% e.g. $ \mathbb{E}_{\highlight{BurntOrange}{\scriptstyle y}} $
+\usepackage{annotate-equations}
+
+\input{macros}
+% Used Section 3.2 Onwards (can change names based on terms)
+% \colorlet{colorp}{NavyBlue}
+% \colorlet{colorT}{WildStrawberry}
+% \colorlet{colork}{OliveGreen}
+% \colorlet{colorM}{RoyalPurple}
+% \colorlet{colorNb}{Plum!80}
+% \colorlet{colorIs}{black}
+% \colorlet{customrgbgreen}{darkgreen}
+% % \colorlet{colorY}{goldenrod}
+% \colorlet{colorY}{Dandelion}
+
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  citecolor=blue,
+  linkcolor=red,
+  urlcolor=magenta,
+  }
+
+\usepackage{float}
+\usepackage{url}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xurl}
+\usepackage{lineno}
+\usepackage{epsfig}
+
+\usepackage{ulem}
+\newcommand{\stkout}[1]{\ifmmode\text{\sout{\ensuremath{#1}}}\else\sout{#1}\fi}
+\usepackage{multirow}
+\usepackage{longtable}
+\setlength\LTleft{0pt}
+\usepackage{tabularx}
+\usepackage{epsfig}
+\usepackage[numbers]{natbib}
+
+
+% \newcommand{\xh}[1]{\textcolor{orange}{\textbf{(xh:)} #1}}
+% \newcommand{\tc}[1]{\textcolor{red}{\textbf{(tc:)} #1}}
+% \newcommand{\aj}[1]{\textcolor{magenta}{\textbf{(aj:)} #1}}
+
+\begin{document}
+\maketitle
+
+
+% \begin{keywords}
+%   example, \LaTeX
+% \end{keywords}
+
+% % REQUIRED
+% \begin{AMS}
+%     62K99, 68T07
+% \end{AMS}
+
+
+% \section{Introduction}
+
+% \section{Background and Related Work}
+
+
+
+\section{Stein Variational Gradient Descent}\label{ss: svgd}
+
+Bayesian inference is a rigorous and general framework for reasoning under uncertainty: we construct a full probability model for all observable and unobservable quantities in a problem, followed by conditioning on the observed data to characterize the posterior distribution for the unobserved quantities. We provide a brief description below:
+
+Let $\theta$ denote an unobservable quantity or parameter, and $D$ denote data or \textit{observations} collected through experiments or simulations. In order to estimate $\theta$, we define and decompose a joint probability distribution on $\theta$ and $D$ as follows:
+\begin{align}
+    p(\theta, D) = \underbrace{p(\theta)}_{\text{prior}} \underbrace{p(D\mid\theta)}_{\text{likelihood}}
+\end{align}
+
+The object of interest in Bayesian inference is the ``posterior density'' $p(\theta \mid D)$, which is the updated uncertainty for the unknown parameters conditioned on the newly acquired observations. It is obtained through the re-arrangement of the various conditional probabilities and summarized via Bayes' theorem:
+
+\begin{align}
+    p(\theta \mid D) = \frac{p(D\mid\theta) \, p(\theta)}{p(D)},
+    \label{eqn: bayes_rule_v1}
+\end{align}
+
+where $p(D)$ is the evidence or marginal likelihood, and often intractable quantity that acts as a normalizing constant on the often tractable likelihood and prior.
+
+Markov Chain Monte Carlo (MCMC) methods \citep{brooks_handbook_2011} are considered a workhorse of modern statistical inference. 
+The high-level idea is to generate a sequence of random samples through construction of a Markov chain whose equilibrium distribution is the target posterior distribution. 
+In addition to sampling from arbitrary distribution families, it also has the key benefit of asymptotic convergence guarantees. 
+However, these methods are computationally intensive when dealing with high-dimensional parameter spaces, despite some impressive algorithmic advancements that make use of gradient information to guide new proposals.
+
+Variational Inference (VI)\citep{jordan_introduction_1999,blei_variational_2017} reformulates traditional Bayesian inference as an optimization problem, where the posterior is approximated by a parametric family of distributions that is closest to the true posterior through a suitable measure. This is usually the reverse KL divergence or other measures from the family of $f$-divergence between probabiliy distributions. 
+While VI is much more scalable to higher-dimensional spaces compared to MCMC, this scalability often trades off its approximation capacity, which is constrained by the choice of the variational family. 
+For instance, mean-field variational Bayes assumes factorization of the variational distribution into independent variational approximations over each latent variable. 
+However, dependencies between the hidden variables mean that this family typically does not contain the true posterior distribution. 
+In general, VI can result in biased approximations to the posterior.
+
+Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful non-parametric VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
+Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
+
+SVGD falls into a class of methods making use of gradient flows of various divergence measures to sample from a target density in generative modeling. It is based on gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. 
+This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. 
+It can be used to characterize complex posterior distributions and is easily parallelizable. Subsequent developments \citep{mroueh_sobolev_2019,korba_kernel_2021} have led to competetive transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
+
+% Stein's method has been applied to a measure transport framework under arbitrary transport map parametrization \citep{fisher_measure_2021}, using the Kernelized Stein Discrepancy (KSD) \citep{liu_kernelized_2016} as the objective instead of the traditional KL divergence. The curse of dimensionality in the kernel representation has also been tackled through the lens of projected transport \citep{chen_projected_2020}, that only propagates low-dimensional projection coefficients to the posterior.
+
+Vanilla SVGD takes as input the target density function $p(x)$ and a set of initial particles $\{x_i^0\}_{i=1}^{n} \sim q_0(x)$ and returns a set of particles $\{x_i^L\}_{i=1}^{n}$ after L iterations that approximates the target distribution.
+
+For iteration $l$, we update the particle positions via:
+
+\begin{align}
+    x_i^{l + 1} &\leftarrow x_i^l + \epsilon_l\hat{\phi}^{\ast}(x_i^l)\nonumber\\
+    \text{ where }\hat{\phi}^{\ast}(x) &= \frac{1}{n}\left[\sum_{j=1}^n k(x_j^l, x) \nabla_{x_j^l}\log p(x_j^l) + \nabla_{x_j^l}k(x_j^l, x)\right]
+    \label{eq: vanilla_svgd}
+\end{align}
+
+This is the decomposable Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. The first term drives the particles towards regions towards the high probability regions of the posterior distribution, while the second term acts as a repulsive force that prevents mode collapse.
+
+Notably, the convergence to the target density / fixed point of the system is decoupled from the update procedure itself, which only requires the perturbation direction to be aligned with the action of the Langevin-Stein operator. 
+The vanilla SVGD procedure is naturally sensitive to choices of initial conditions, optimization methods, and hyperparameters such as the choice of kernel and the step size / learning rate sequence, used to find the fixed point. 
+Common implementations of SVGD, including that of \cite{Liu2016} use Adagrad to set a per-parameter learning rate. The follow-up work of \cite{wang_stein_2019} generalizes the SVGD to make use of flexible matrix-valued kernels in gradient descent preconditioned with Hessian or Fisher information. These are complemented by learning-rate free methods, for example, the betting-strategy based \texttt{CoinSVGD} from \cite{sharrock_coin_2023}.
+
+% Some remarks about the connection of SVGD to MCMC methods are in order. 
+SVGD differs from conventional gradient-based MCMC methods in its evolution of a co-ordinated particle ensemble instead of simulation of Markov chains with individual particles. An example of the latter is Euler-discretized unadjusted Langevin algorithm (ULA). ULA is not equipped with a repulsive mechanism to ensure coverage, rather, Gaussian noise is injected at each step to prevent collapse to the MAP solution. 
+
+% Stein's identity has also aided the construction of a useful discrepancy measure, the so-called Kernelized Stein Discrepancy (KSD), which finds use not only in goodness-of-fit statistical tests \citep{chwialkowski_kernel_2016}, but has also been extended to a measure transport framework under arbitrary transport map parametrization and an unbiased estimator of the score\citep{fisher_measure_2021}.
+
+Independent of the update procedure and the hyperparameters, the major bottlenecks associated with transporting the particles are:
+
+\begin{enumerate}
+    \item Computing the gradient $\nabla_x \log p(x)$. For Bayesian Inference, this amounts to evaluating the score function associated with the posterior distribution and thereby the cost of repeated likelihood evaluations via a high-fidelity model.
+
+    \item The $O(n^2)$ cost associated with computing elements $k(x_i, x_j)$ of the dense kernel matrix. \label{it: kernel_cost}
+\end{enumerate}
+
+The recommendation of \cite{Liu2016} is to approximate the score with subsampled mini-batches of the data, with a view to reduce the number of score evaluations at a single point $x$. A formal justification of this procedure appears in \cite{gorham_stochastic_2020}, where the stochastic Stein discrepancy is formulated and shown to converge to continuous SVGD in 1-Wasserstein distance. While these can bring about significant computational savings, they form a class of single-fidelity SVGD variants and do not consider reduction in cost of an individual forward model evaluation that underlies the likelihood definition.
+
+
+The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
+One simple example is propagation of an initial set of particles towards a bimodal target density, visualized in Figure~\ref{fig:cov_structure}. 
+Since particles assume memberships of separate clusters, this introduces some structure and potentially sparsity in the covariance matrix, which may be exploited to bring down the total kernel evaluation cost. 
+Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. 
+For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/structure_cov_kernel.jpg}
+    \caption{Covariance kernel with block diagonal structure corresponding to particles sampled from a bimodal target density}
+    \label{fig:cov_structure}
+\end{figure}
+
+Our initial focus is on efficient evaluation of the score function through multi-fidelity setups that reduce the number of high-fidelity model-based likelihood evaluations, before considering a potential combination of the kernel and score approximation for future work.
+
+% \subsection{Gradient-based MCMC Methods}
+
+% SVGD differs from conventional gradient-based MCMC methods in its evolution of a co-ordinated particle ensemble instead of simulation of Markov chains with individual particles. In particular, the Euler-discretized Langevin dynamics simulates a Markov chain with the rule:
+
+% \begin{equation}
+%     x_{i+1} \leftarrow x_i + \frac{\epsilon}{2}\nabla \log p(x_i) + \epsilon \eta_i
+% \end{equation}
+
+% where $\eta_i \sim \CN(0, \epsilon)$ injects Gaussian noise at each step to prevent collapse to the MAP solution. 
+% For Bayesian inference, Stochastic Gradient Langevin Dynamics (SGLD) \citep{welling_bayesian_2011,brosse_promises_2018} permits use of large-scale datasets through unbiased gradient estimators based on small mini-batches of the data, potentially augmented with control-variates for variance reduction. 
+% While these approaches to Langevin dynamics are extremely relevant to discussions of variance reduction techniques for MCMC methods, the key ideas do not translate directly to the SVGD setting: instead of distributing workload amongst an ensemble of particles, these reduce the costs of likelihood evaluation conditioned on a particular realization of parameters $x$.
+
+
+\subsection{Approximate Control Variates for Multi-fidelity Estimation}\label{ss: acv}
+
+% \textcolor{red}{Stealing the text from acv with uq with some cuts}
+
+Consider a mapping $Q=f_0(Z)$ that relates the random vector $Z \in \mathbb{R}^{n_{z}}$ and the random variable $Q \in \mathbb{R}$. The expected value of $Q$ is often approximated by a standard $N$-sample Monte Carlo (MC) estimator:
+\begin{align}\label{eqn:mc}
+    \mathbb{E}\left[Q_0\right] 
+    \approx \hat{Q}_0 := \frac{1}{N} \sum^{N}_{j=1}f_0(z^{(j)}),
+\end{align}
+
+where $z^{(j)} \sim p(Z)$ are independent and identically distributed (i.i.d.) samples drawn from the probability distribution of $Z$. The MC estimator $\hat{Q}$ is unbiased, making its estimator error contributed entirely by its variance $N^{-1}\Var[Q]$. When using computationally intensive models, the number of samples $N$ that can be afforded may not be sufficiently high to limit this variance.
+
+To reduce the estimator variance, multi-fidelity methods leverage an ensemble of low-fidelity models whose outputs are correlated with the high-fidelity model of interest but with diminished costs. 
+
+Control variates (CVs) are a widely used classical method for variance reduction in Monte-Carlo methods. 
+The general approach is to identify another function $f_1$, such that the traditional expected value estimator described in Equation~\ref{eqn:mc} can be replaced by one constructed with $f_0 - f_1$, with smaller variance. The function $f_1$ is then referred to as a control variate. 
+Typically, selection of $f_1$ (generalized to selection of $\{f_i\}, i=1, \cdots, M$) and identifying a rich set of candidate CVs is a non-trivial procedure barring the exceptions where CVs can be identified from domain knowledge. 
+Linear transformations of the score function have been one of the popular choices given the high canonical correlations with the target that result in better variance reduction, and their straightforward incorporation into modern MCMC methods with gradient information and marginalization of hyperparameters \citep{papamarkou_zero_2014,oates_control_2017}. \cite{si_scalable_2021} extends CV identification to the high-dimensional settings by proposing a variational formulation based on Stein operators.
+% \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
+
+
+In the context of multifidelity methods however, we typically already have access to a hierarchy of models, where each available low-fidelity model can be leveraged as a control variate, but their respective expectations must be computed from samples too. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving reduced-variance estimators in this setting.
+This method introduces $M$ auxiliary random variables $Q_{m}$ for $m=1,\ldots,M$ that are outputs of the corresponding (e.g., low-fidelity) models $Q_{m} =f_{m}(Z)$, then combines the corresponding MC estimates of each low-fidelity model, $\hat{Q}_{m}$, into a single estimator. The ACV estimator, which we denote $\tilde{Q}$, can be written as:
+\begin{align}
+        \Tilde{Q}(z,\alpha,\CA) &:= 
+        \hat{Q}_{0}(z_{0})+\sum^{M}_{m=1}\alpha_{m}\left( \hat{Q}_{m}(z^{\ast}_{m})-\hat{\mu}_{m}(z_{m}) \right) \nonumber\\ 
+        &= \hat{Q}_{0}(z_{0})+\sum^{M}_{m=1}\alpha_{m}\left( \hat{Q}_{m}(z^{\ast}_{m})-\hat{Q}_{m}(z_{m}) \right),     \label{eqn:ACV-Formula}
+\end{align}
+where $\hat{\mu}_{m}$ is an MC estimate for the $m$th model mean, $\alpha = \left[ \alpha_{1}, \ldots, \alpha_M \right]$ is a vector of control variate weights, and the input samples $z$ are partitioned into subsets $z_{0}$, $z_{m}$, and  $z^{\ast}_{m}$ according to a sample partitioning strategy $\CA$. The control variate weights $\alpha$ and the sample partitioning strategy $\CA$ are hyperparameters of the estimator.
+%that are chosen to optimally reduce the estimator variance. 
+
+Since the ACV estimator is unbiased with respect to the high-fidelity model, its error is equal to the estimator variance. To express this variance mathematically, we introduce a vectorized notation for the ACV estimator:
+\begin{align}\label{eqn:vectorized-acv}
+    \Tilde{Q}(z;\alpha,\CA) = \hat{Q}_{0} + \alpha^{\top}\Delta,
+\end{align}
+where $\Delta:=\left[ \Delta_{1}(z_{1}^{\ast},z_{1}), \ldots,  \Delta_{M}(z_{M}^{\ast},z_{M})\right]$, $\Delta_{m}(z_{m}^{\ast},z_{m}):=\hat{Q}_{m}(z^{\ast}_{m})-\hat{Q}_{m}(z_{m})$, and the explicit dependence on the inputs $z_{m}$ and $z_{m}^{\ast}$ are omitted for simplicity of notation. The ACV estimator variance is then:
+\begin{align}\label{eqn:acv-variance}
+    \Var[\Tilde{Q}(z;\alpha,\CA)] = \Var[\hat{Q}_{0}] - \alpha^{\top}(\Cov[\Delta, \Delta])^{-1}\alpha + 2 \alpha^{\top} \Cov[\Delta, \hat{Q}_{0}].
+\end{align}
+The estimator variance is dependent on the covariances between each model output, the control variate weights, and the sample partitioning that influences how each $\Delta$ term covaries with each other and with $\hat{Q}_{0}$. If the exact covariance between each model output is known, then the optimal weights for a given ACV sample allocation $\CA$ can be computed by minimizing \eqref{eqn:acv-variance}. The optimal weights are:
+\begin{align}\label{eqn:alpha-star-acv}
+    \alpha^{\ast}(\CA)=-\Cov[\Delta, \Delta]^{-1}\Cov[\Delta, \hat{Q}_{0}],
+\end{align}
+and when these weights are set to their optimal values, the ACV estimator variance is~\cite{Gorodetsky2020}:
+\begin{align}\label{eqn:acv-variance-opt}
+    \Var[\Tilde{Q}^{\alpha^{\ast}}](\CA) = \Var[\hat{Q}_{0}] - \Cov[\Delta, \hat{Q}_{0}]^{\top} \Cov[\Delta, \Delta]^{-1}\Cov[\Delta, \hat{Q}_{0}].
+\end{align}
+
+The sample partitioning $\CA$ determines how much computational workload is distributed to each model. The well-known multi-fidelity Monte Carlo (MFMC) \cite{peherstorfer_optimal_2016} and multi-level Monte Carlo (MLMC) \cite{giles_multilevel_2015} methods can be shown to be special cases of ACV that differ in the family of possible $\CA$ choices. Solving for the optimal sample partitioning strategy $\CA^{\ast}$ is more intensive than solving for the optimal weights $\alpha^{\ast}$ but many tools \cite{bomarito_multi_2020, jakeman_pyapprox_2023} are available to approximately solve the optimization problem:
+\begin{align}
+    \min_{\mathcal{A}\in\mathbb{A}} &\quad \Var[\tilde{Q}(Z;\alpha^{\ast},\mathcal{A})] \label{eqn:mxmcpy}\\
+    \text{subject to} &\quad \mathcal{W}(w,\mathcal{A})\leq w_{\text{budget}},\label{eqn:mxmcpy_constraint}
+\end{align}
+where $\mathbb{A}$ is a wide set of predefined allowable set of sample allocations, $w_{\text{budget}}$ is the total budget constraint, and $\mathcal{W}(w,\mathcal{A})$ computes the total cost of the estimator under model costs $w := [w_0, \ldots, w_M]$ and sample allocation $\CA$.
+
+Importantly, the solutions to \eqref{eqn:mxmcpy} and \eqref{eqn:alpha-star-acv} are only computable with knowledge of the model output covariance matrix, $\Sigma = \Cov\left[ f_0(Z),\ldots,f_M(Z)
+\right]$, as well as the model costs vector $w$. 
+While the relationship between $\alpha$ and the estimator variance is clear from \eqref{eqn:acv-variance}, the relationship between $\Sigma$ and the estimator variance is dependent on $\CA$ via the terms in \eqref{eqn:acv-variance}:
+\begin{align}
+    \Cov[\Delta, \Delta] &= G(\CA) \odot \Sigma, \label{eqn:cov-delta-delta} \\
+    \Cov[\Delta, \hat{Q}_{0}] &= \text{diag}(G(\CA)) \odot \text{col}_0( \Sigma ), \label{eqn:cov-delta-Q}
+\end{align}
+where $G \in \RR^{M\times M}$ is matrix that depends on $\CA$ and the exact sample allocation strategy in use (see \cite{bomarito_multi_2020}), $\odot$ signifies the Hadamard (elementwise) product, and $\text{col}_{0}( \Sigma )$ is the first column of $\Sigma$, i.e., the covariances between the high-fidelity model and all the low-fidelity models.
+
+Alternative sampling-based estimators beyond the ACV formulation above, such as the multilevel best linear unbiased (MLBLUE) estimator from \cite{schaden_multilevel_2020} 
+can produce impressive variance reduction like ACV. 
+In fact, the generalized linear grouped ACV estimator (GACV) \cite{gorodetsky_grouped_2024} generalizes these methods. Though exact parametrizations may differ across estimators, they share common features of estimator weights and sample allocations.
+
+% \subsection{Bayesian Optimal Experimental Design}
+
+
+\section{Analysis}
+
+\subsection{Model-output covariance decomposition}
+
+\begin{enumerate}
+    \item How does the model-output covariance change through SVGD updates, and how do different gradient terms contribute to this covariance?
+
+    \item How does the sample covariance differ from the oracle covariance as the total number of particles propagated via SVGD changes?
+\end{enumerate}
+
+\subsection{ACV Estimator Formulation}
+
+
+
+\subsection{}
+
+\appendix
+
+
+\bibliographystyle{siamplain}
+\bibliography{local,references}
+
+\end{document}
+
