@@ -127,6 +127,18 @@ The key contributions are an unbiased estimator of the SVGD confining force term
 
 \section{Introduction}
 
+
+\begin{enumerate}
+    \item We propose a multi-fidelity SVGD approach that blends particle updates based on target densities of different fidelities to learn the approximate high-fidelity posterior with significant computational savings.
+
+    \item We develop procedures for offline and online pilot sampling that is key to establishing covariance information for learning ACV hyperparameters. The latter in particular enables budget-efficient sampling that guides the SVGD update trajectory with appropriate budget allocation to each model.
+    \item We validate the method on several benchmark target densities and a Bayesian inference setup.
+\end{enumerate}
+
+These contributions provide a principled framework for deploying control-variate techniques in settings of approximate inference. The remainder of this paper is organized as follows. Section 2 reviews SVGD literature and some background on ACV estimators and discusses related work. Section 3 introduces the new multi-fidelity SVGD update and the overall algorithm with the pilot sampling procedures. Section 5 demonstrates the method on several inference problems. Section 6 concludes.
+
+
+
 \section{Background and Related Work}
 
 
