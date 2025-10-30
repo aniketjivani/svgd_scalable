@@ -172,12 +172,30 @@ For instance, mean-field variational Bayes assumes factorization of the variatio
 However, dependencies between the hidden variables mean that this family typically does not contain the true posterior distribution. 
 In general, VI can result in biased approximations to the posterior.
 
-Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, proposes a powerful non-parametric VI method. First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
-Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
+Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, is a powerful non-parametric VI method to characterize complex posterior distributions. We provide a brief overview here, and introduce some notation. 
 
-SVGD falls into a class of methods making use of gradient flows of various divergence measures to sample from a target density in generative modeling. It is based on gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. 
-This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. 
-It can be used to characterize complex posterior distributions and is easily parallelizable. Subsequent developments \citep{mroueh_sobolev_2019,korba_kernel_2021} have led to competetive transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
+\aj{Need to paraphrase a little from Liu 2017 and remove notation that is redundant}
+
+Consider a probability space $(\Omega, \CF, \PP)$ where $\Omega$ is the sample space, $\CF$ is a $\sigma$-algebra, and $\PP$ is a probability measure with a positive, weakly differentiable density $p(x)$. $p$ is our target density , which may be a posterior distribution on some parameters of interest in Bayesian inference. \aj{$\int_{\Omega} p \partial_i\phi dx = - \int_{\Omega} g_i \phi dx$ for compactly supported $\phi$ then $g_i$ is weak ith derivative of $p$}. We wish to approximate $\PP$ with a set of particles $\{x_i\}_{i=1}^n$ whose empirical measure $\hat{\mu}_n(dx) = \sum_{i=1}^{n} (\delta (x - x_i) /n ) dx$ weakly converges to $\PP$ as $n \rightarrow \infty$, in the sense that $\EE_{\hat{\mu}_n}[h] \rightarrow \EE_{\PP}[h]$ as $n \rightarrow \infty$ for bounded, continuous test functions $h$.
+
+We initialize particles from some simple reference distribution $q_0$ and update them via the incremental transport map $T$:
+\begin{align}
+    T(x) = x + \epsilon \phi(x)\label{eq: transport_map}
+\end{align}
+where $\epsilon$ is a small step size. $\phi(x)$ is the transform function or velocity field that operates pointwise on each particle in $\{x_i\}_{i=1}^n$. 
+The optimal velocity field at each step is chosen to maximally decrease the KL divergence of the particle distribution with the target distribution $p$. This is framed in \cite{Liu2016} as the solution to the following functional optimization problem:
+\begin{align}
+    \hat{\phi}^{\ast} = \arg \max_{\phi_\in \CH} \left\{-\frac{d}{d\epsilon}\operatorname{KL}(T_{\sharp} \mu || \PP)|_{\epsilon=0} \quad s.t. ||\phi||_{\CH} \leq 1\right\}\label{eq: kl_opt}
+\end{align}
+
+Here, $T_{\sharp} \mu$ is the pushforward measure of $\mu$ through map $T$, and $\CH$ is the normed function space chosen to optimize over.
+
+% First, a transport map $T$ is defined between a tractable reference distribution $q_0(x)$ and the target density. 
+% Rather than restricting the set of transforms $T$ to a certain parametric form, it is instead constructed incrementally to propagate an initial set of particles drawn from $q_0$, with each successive transform directed towards steepest rate of change of KL divergence. 
+
+% SVGD falls into a class of methods making use of gradient flows of various divergence measures to sample from a target density in generative modeling. It is based on gradient flow of KL divergence over the $\CH$-Wasserstein distance, where $\CH$ is an RKHS equipped with kernel $k(x, x')$. 
+% This is exploited to result in a deterministic, interpretable and simple inference procedure resembling gradient descent. 
+
 
 % Stein's method has been applied to a measure transport framework under arbitrary transport map parametrization \citep{fisher_measure_2021}, using the Kernelized Stein Discrepancy (KSD) \citep{liu_kernelized_2016} as the objective instead of the traditional KL divergence. The curse of dimensionality in the kernel representation has also been tackled through the lens of projected transport \citep{chen_projected_2020}, that only propagates low-dimensional projection coefficients to the posterior.
 
@@ -200,7 +218,7 @@ As the SVGD update progresses, these two competing forces eventually balance eac
 SVGD thus differs from conventional gradient-based MCMC methods in its evolution of a co-ordinated particle ensemble instead of simulation of Markov chains with individual particles. An example of the latter is Euler-discretized unadjusted Langevin algorithm (ULA). ULA is not equipped with a repulsive mechanism to ensure coverage, rather, Gaussian noise is injected at each step to prevent collapse to the MAP solution. 
 
 While the explicit Euler method-like update of Equation~\ref{eq: vanilla_update} is commonly codified as the update equation for the SVGD algorithm, we need not follow this in practice, and leverage more efficient update procedures. As noted in \cite{wang_stein_2019}, convergence to the target density / fixed point of the system is decoupled from the update procedure itself, which only requires the perturbation direction to be aligned with the action of the Langevin-Stein operator. 
-Common implementations of SVGD, including that of \cite{Liu2016} use Adagrad to set a per-parameter learning rate. The follow-up work of \cite{wang_stein_2019} generalizes the SVGD to make use of flexible matrix-valued kernels in gradient descent preconditioned with Hessian or Fisher information. These are complemented by learning-rate free methods, for example, the betting-strategy based \texttt{CoinSVGD} from \cite{sharrock_coin_2023}. 
+Common implementations of SVGD, including that of \cite{Liu2016} use Adagrad to set a per-parameter learning rate. The follow-up work of \cite{wang_stein_2019} generalizes the SVGD to make use of flexible matrix-valued kernels in gradient descent preconditioned with Hessian or Fisher information. These are complemented by learning-rate free methods, for example, the betting-strategy based \texttt{CoinSVGD} from \cite{sharrock_coin_2023}. Finally, developments such as \citep{mroueh_sobolev_2019,korba_kernel_2021} propose transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
 
 Overall, SVGD performance is sensitive to choice of initial particle configuration, optimization methods, and hyperparameters such as the kernel function and the step size / learning rate sequence, used to find the fixed point. 
 
@@ -224,9 +242,7 @@ The recommendation of \cite{Liu2016} is to approximate the score with subsampled
 
 The kernel weighting factor as well as the particle repulsion term also have scope for cost savings through identification of covariance structures as the map is iteratively constructed. 
 This is illustrated through propagation of an initial set of particles towards a bimodal target density, visualized in Figure~\ref{fig:cov_structure}. 
-Since particles assume memberships of separate clusters, this introduces some structure and potentially sparsity in the covariance matrix, which may be exploited to bring down the total kernel evaluation cost. 
-Estimation of sparse covariance structures \citep{fop_model-based_2018} is of great interest in the statistical literature and in studies of  graphical models. 
-For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. 
+Since particles assume memberships of separate clusters, this introduces some structure and sparsity in the covariance matrix, which may be exploited to bring down the total kernel evaluation cost. For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailored to continuous graphical models through localized kernel approximations. Estimation of sparse covariance structures \citep{fop_model-based_2018} is of independent interest in the statistical literature and in studies of  graphical models. However, we leave the integration of efficient kernel approximations for future work and focus on the score function evaluation bottleneck for the rest of this paper.
 
 \begin{figure}[htbp]
     \centering
@@ -235,7 +251,7 @@ For instance, a message-passing version of SVGD \citep{wang_stein_2018} is tailo
     \label{fig:cov_structure}
 \end{figure}
 
-However, we leave the integration of efficient kernel approximations for future work. The focus of this work remains on reducing the score function evaluation bottleneck. This will be done through a multi-fidelity setup, leveraging Approximate Control Variates (ACVs) in particular for efficient representation of the confining force.
+ % This will be done through a multi-fidelity setup, leveraging Approximate Control Variates (ACVs) in particular for efficient representation of the confining force.
 
 Next, we provide background on multi-fidelity estimation using ACV estimators, before reviewing work leveraging multiple models for SVGD.
 
