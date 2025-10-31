@@ -178,7 +178,7 @@ Stein Variational Gradient Descent (SVGD), introduced in \cite{Liu2016}, is a po
 
 Consider a probability space $(\Omega, \CF, \PP)$ where $\Omega$ is the sample space, $\CF$ is a $\sigma$-algebra, and $\PP$ is a probability measure with a positive, weakly differentiable density $p(x)$. $p$ is our target density , which may be a posterior distribution on some parameters of interest in Bayesian inference. \aj{$\int_{\Omega} p \partial_i\phi dx = - \int_{\Omega} g_i \phi dx$ for compactly supported $\phi$ then $g_i$ is weak ith derivative of $p$}. We wish to approximate $\PP$ with a set of particles $\{x_i\}_{i=1}^n$ whose empirical measure $\hat{\mu}_n(dx) = \sum_{i=1}^{n} (\delta (x - x_i) /n ) dx$ weakly converges to $\PP$ as $n \rightarrow \infty$, in the sense that $\EE_{\hat{\mu}_n}[h] \rightarrow \EE_{\PP}[h]$ as $n \rightarrow \infty$ for bounded, continuous test functions $h$.
 
-We initialize particles from some simple reference distribution $q_0$ and update them via the incremental transport map $T$:
+We initialize particles from a simple reference distribution $q_0$ and update them via the incremental transport map $T$:
 \begin{align}
     T(x) = x + \epsilon \phi(x)\label{eq: transport_map}
 \end{align}
@@ -218,7 +218,7 @@ As the SVGD update progresses, these two competing forces eventually balance eac
 SVGD thus differs from conventional gradient-based MCMC methods in its evolution of a co-ordinated particle ensemble instead of simulation of Markov chains with individual particles. An example of the latter is Euler-discretized unadjusted Langevin algorithm (ULA). ULA is not equipped with a repulsive mechanism to ensure coverage, rather, Gaussian noise is injected at each step to prevent collapse to the MAP solution. 
 
 While the explicit Euler method-like update of Equation~\ref{eq: vanilla_update} is commonly codified as the update equation for the SVGD algorithm, we need not follow this in practice, and leverage more efficient update procedures. As noted in \cite{wang_stein_2019}, convergence to the target density / fixed point of the system is decoupled from the update procedure itself, which only requires the perturbation direction to be aligned with the action of the Langevin-Stein operator. 
-Common implementations of SVGD, including that of \cite{Liu2016} use Adagrad to set a per-parameter learning rate. The follow-up work of \cite{wang_stein_2019} generalizes the SVGD to make use of flexible matrix-valued kernels in gradient descent preconditioned with Hessian or Fisher information. These are complemented by learning-rate free methods, for example, the betting-strategy based \texttt{CoinSVGD} from \cite{sharrock_coin_2023}. Finally, developments such as \citep{mroueh_sobolev_2019,korba_kernel_2021} propose transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
+Common implementations of SVGD, including that of \cite{Liu2016} use AdaGrad, which adjusts the step-size per particle based on the inverse of the particle gradient. The follow-up work of \cite{wang_stein_2019} generalizes the SVGD to make use of flexible matrix-valued kernels in gradient descent preconditioned with Hessian or Fisher information. These are complemented by learning-rate free methods, for example, the betting-strategy based \texttt{CoinSVGD} from \cite{sharrock_coin_2023}. Finally, developments such as \citep{mroueh_sobolev_2019,korba_kernel_2021} propose transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
 
 Overall, SVGD performance is sensitive to choice of initial particle configuration, optimization methods, and hyperparameters such as the kernel function and the step size / learning rate sequence, used to find the fixed point. 
 
@@ -335,9 +335,10 @@ In fact, the generalized linear grouped ACV estimator (GACV) \cite{gorodetsky_gr
 
 In this section, we highlight two previous approaches that leverage estimation with multiple models to drive the SVGD updates and achieve significant cost reduction in the process. 
 
-While these represent the first significant efforts targeting more efficient SVGD approximation, we point out some limitations in their flexibility and overall performance:
+While these are important efforts that provably result in more efficient SVGD-based approximations, we point out key limitations that restrict broader adoption:
+
 \begin{enumerate}
-    \item Rely only on discretization for forward model operator, but cannot directly leverage models of dissimilar parametrizations, or non-model-based approximations, for example, a mean-field VI based posterior serving as the low-fidelity model.
+    \item The multilevel approach is limited to model ensembles with constraints on the cost-accuracy relationships. For instance, both methods above rely on coarser discretizations of the forward operator. They cannot operate with more general ensembles that commonly arise in scientific development, including reduced-order models and surrogates.
 
     \item Effectiveness of not blending? 
 \end{enumerate}
