@@ -205,22 +205,30 @@ For iteration $l$, we update each of the particles $x_i$ via:
 
 \begin{align}
     x_i^{l + 1} &\leftarrow x_i^l + \epsilon_l\hat{\phi}^{\ast}(x_i^l)\label{eq: vanilla_update}\\
-    \text{ where }\hat{\phi}^{\ast}(x) &= \frac{1}{n}\left[\textcolor{orange}{\underbrace{\sum_{j=1}^n k(x_j^l, x) \nabla_{x_j^l}\log p(x_j^l)}_{\text{Confining Force}}} + \textcolor{violet}{\underbrace{\sum_{j=1}^{n}\nabla_{x_j^l}k(x_j^l, x)}_{\text{Repulsive Force}}}\right].
+    \text{ where }\hat{\phi}^{\ast}(x) &= \frac{1}{n}\left[\textcolor{orange}{\underbrace{\sum_{j=1}^n k(x_j^l, x) \nabla_{x_j^l}\log p(x_j^l)}_{\text{Confining Force (CF) }, \psi}} + \textcolor{violet}{\underbrace{\sum_{j=1}^{n}\nabla_{x_j^l}k(x_j^l, x)}_{\text{Repulsive Force (RF)},\tau}}\right].
     \label{eq: vanilla_svgd}
 \end{align}
-Here, $\nabla_x \log p(x)$ is the gradient of the log-PDF of the target distribution, also referred to as the score function or simply the score, a term we adopt for the remainder of this text.
+Here, $\nabla_x \log p(x)$ is the gradient of the log-PDF of the target distribution, also referred to as the score function or simply the score in the literature, a term we adopt for the remainder of this text.
 
-$\hat{\phi}^{\ast}$ is known as the Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. 
-The first term acts as a confining force (CF) (as coined by \cite{ye_stein_2020}), that drives the particles towards regions towards the high probability regions of the posterior distribution. This primarily depends on the score term which is smoothed by the product with the kernel evaluation. 
-The second term acts as a repulsive force (RF) that prevents mode collapse and drives particles apart at each SVGD iteration, by an amount depending on the kernel lengthscale, which can be adapted iteration to iteration and the previous particle positions. 
+The gradient $\hat{\phi}^{\ast}$ is known as the Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. 
+The first term $\psi$ acts as a confining force (CF) (as coined by \cite{ye_stein_2020}), that drives the particles towards regions towards the high probability regions of the posterior distribution. This primarily depends on the score term which is smoothed by the product with the kernel evaluation. 
+The second term $\tau$ acts as a repulsive force (RF) that prevents mode collapse and drives particles apart at each SVGD iteration, by an amount depending on the kernel lengthscale, which can be adapted iteration to iteration and the previous particle positions. 
 As the SVGD update progresses, these two competing forces eventually balance each other, so the approximate density $q$ weakly converges to the target $p$.
 
 SVGD thus differs from conventional gradient-based MCMC methods in its evolution of a co-ordinated particle ensemble instead of simulation of Markov chains with individual particles. An example of the latter is Euler-discretized unadjusted Langevin algorithm (ULA). ULA is not equipped with a repulsive mechanism to ensure coverage, rather, Gaussian noise is injected at each step to prevent collapse to the MAP solution. 
 
 While the explicit Euler method-like update of Equation~\ref{eq: vanilla_update} is commonly codified as the update equation for the SVGD algorithm, we need not follow this in practice, and leverage more efficient update procedures. As noted in \cite{wang_stein_2019}, convergence to the target density / fixed point of the system is decoupled from the update procedure itself, which only requires the perturbation direction to be aligned with the action of the Langevin-Stein operator. 
-Common implementations of SVGD, including that of \cite{Liu2016} use AdaGrad, which adjusts the step-size per particle based on the inverse of the particle gradient. The follow-up work of \cite{wang_stein_2019} generalizes the SVGD to make use of flexible matrix-valued kernels in gradient descent preconditioned with Hessian or Fisher information. These are complemented by learning-rate free methods, for example, the betting-strategy based \texttt{CoinSVGD} from \cite{sharrock_coin_2023}. Finally, developments such as \citep{mroueh_sobolev_2019,korba_kernel_2021} propose transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
+Common implementations of SVGD, including that of \cite{Liu2016} use AdaGrad, which adjusts the step-size per particle based on the inverse of the particle gradient. 
 
-Overall, SVGD performance is sensitive to choice of initial particle configuration, optimization methods, and hyperparameters such as the kernel function and the step size / learning rate sequence, used to find the fixed point. 
+Since its initial development, a number of follow-up works have sought to enhance SVGD both theoretically and algorithmically, to  increase its utility in real-world Bayesian inference tasks. We describe a few notable ones here, beginning with the latter. \cite{detommaso_stein_2018} accelerate the SVGD algorithm by including second-order information, resulting in a Stein Variational Newton (SVN) method. The work of \cite{wang_stein_2019} generalizes the SVGD further to make use of flexible matrix-valued kernels in a preconditioned gradient descent procedure. A special case of this procedure recovers the SVN method. Overall, these works help accelerate the exploration of the target density landscape and provide greater flexibility in the choice of RKHS kernels.
+
+Other works seek faster convergence to the target based on robust versions of SVGD that are not as sensitive to the choice of hyperparameters, in particular the learning rate or the step size sequence. For example, the method  known as \texttt{CoinSVGD} from \cite{sharrock_coin_2023} establishes a learning-rate free method rooted in betting strategies for stochastic optimization, that substantially improves the rate of convergence without requiring substantial fine-tuning from the user. 
+
+At the same time, the theoretical understanding of SVGD has improved too. \cite{liu_stein_2017} develops the first theoretical analysis of SVGD, characterizing its asymptotic behaviour by the nonlinear Vlasov equation and drawing connections to transport methods based on gradient flows of other discrepancy measures. Others works develop theory on related applications of Stein's identity, and impact practical choices for SVGD in the process, such as the metrics used to track SVGD progress. For instance,  theory for the weak convergence of KSD is developed in \cite{gorham_measuring_2017}, and suggests that commonly used KSD formulations fail to detect non-convergence for violating sample sequences, even for simple Gaussian targets in small to modest dimensions ($d \geq 3$). Their findings motivate the use of kernels with slowly decaying tails, such as the Inverse Multi-Quadric (IMQ) kernel to provably determine convergence for a large class of target distributions.
+Finally, \cite{shi_finite-particle_2023} provided the first finite-particle convergence rate under mild assumptions, where the kernelized Stein discrepancy is driven to zero at a rate of $(1/\sqrt{\log \log n})$ for $n$ particles.
+% Finally, developments such as \citep{mroueh_sobolev_2019,korba_kernel_2021} propose transport methods based on gradient flow of other discrepancy measures such as the MMD, and the kernelized Stein discrepancy (KSD).
+
+ 
 
 \textcolor{red}{Does use of Adagrad in our implementations affect validity of the multi-fidelity expression?}
 
@@ -230,7 +238,7 @@ Overall, SVGD performance is sensitive to choice of initial particle configurati
 
 % Stein's identity has also aided the construction of a useful discrepancy measure, the so-called Kernelized Stein Discrepancy (KSD), which finds use not only in goodness-of-fit statistical tests \citep{chwialkowski_kernel_2016}, but has also been extended to a measure transport framework under arbitrary transport map parametrization and an unbiased estimator of the score\citep{fisher_measure_2021}.
 
-Independent of the update procedure and the hyperparameters, the major bottlenecks associated with transporting the particles are:
+Finally we discuss efforts related to the approximation of the single-step gradient term. Independent of the update procedure and the hyperparameters, the major bottlenecks associated with transporting the particles at each step are:
 \begin{enumerate}
     \item Computing the score function. For Bayesian Inference, treating $p$ as the target posterior, the score can be further decomposed as $\nabla_x \log p(x | \CD) =  \nabla_x \log (\CD | x) + \nabla_x \log p_0(x)$. This amounts to computation of the likelihood for each particle based on repeated evaluations of an expensive high-fidelity model.
 
