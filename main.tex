@@ -13,7 +13,7 @@
 % Optional PDF information
 \ifpdf
 \hypersetup{
-  pdftitle={Scalable Stein Variational Gradient Descent via Multifidelity Particle Transport with Application to Bayesian Inference},
+  pdftitle={A Multi-fidelity Method for Stein Variational Gradient Descent with Application to Bayesian Inference},
   pdfauthor={A. Jivani, T. Coons, and X. Huan}
 }
 \fi
@@ -107,11 +107,13 @@
 \maketitle
 
 \begin{abstract}
-Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. 
-Various advancements leveraging Stein operators have since found application in hypothesis testing, information theory, optimal transport and inference. 
-An example is Stein Variational Gradient Descent (SVGD), a non-parametric variational inference technique which deterministically transports a particle ensemble to cover and approximate complex posterior distributions without restriction to a particular variational family. 
-However, the use of SVGD is hampered by the cost of evaluation of target densities based on computationally expensive high-fidelity forward models, which are ubiquitous in scientific applications.
-In this work, we contribute to the growing body of work on scalable SVGD approximations by making use of multi-fidelity estimation techniques. Specifically, we use an unbiased estimator of the SVGD confining force term that leverages inexpensive score evaluations derived from lower fidelity forward models or density approximations. Through this flexible setup, a greater number of particles can be propagated for the same computational budget. This results in improved estimates for Monte-Carlo integrands and posterior summary statistics in Bayesian Inference, and is a useful addition to techniques that adapt control variates for accelerating Bayesian inference.
+% Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. 
+% Various advancements leveraging Stein operators have since found application in hypothesis testing, information theory, optimal transport and inference. 
+Stein Variational Gradient Descent (SVGD) is a popular non-parametric variational inference technique for Bayesian inference. Typically, a finite set of particles is transported deterministically to characterize complex posterior distributions without restriction on the variational family. This only requires access to the score function of the target density and a standard kernel matrix to determine confining and repulsive forces acting on the interacting particle system.
+Despite the particle efficiency compared to standard Monte Carlo estimation, usage of SVGD is bottlenecked by the cost of score evaluation for computationally expensive high-fidelity forward models and high-dimensional surrogates, which are ubiquitous in scientific applications.
+In this work, we contribute to the growing body of work on scalable SVGD approximations by making use of multi-fidelity estimation techniques. Specifically, we use an unbiased estimator of the SVGD confining force term that leverages inexpensive score evaluations derived from lower fidelity forward models or density approximations. Through this flexible setup, a greater number of particles can be propagated for the same computational budget while improving the estimates for Monte-Carlo integrands and posterior summary statistics. 
+We demonstrate the value of the method in numerical benchmark problems, including Bayesian inference depending on a PDE forward model through the likelihood, and a Bayesian Neural Network.
+% useful addition to techniques that adapt control variates for accelerating Bayesian inference.
 \end{abstract}
 
 \begin{keywords}
@@ -140,7 +142,7 @@ These contributions provide a principled framework for deploying control-variate
 
 \section{Background and Related Work}
 
-\aj{add to literature: Support points (VR Joseph) and Stein Points, VP and GB- SVGD (for convergence), thinning for MCMC \url{https://arxiv.org/pdf/2005.03952}, actual multi-level approximation - \url{https://arxiv.org/pdf/2402.01320}}
+\aj{add to literature: Other Bayesian Inference techniques e.g. SGLD (\url{https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf}), MCMC related: Support points (VR Joseph) and Stein Points, VP and GB- SVGD (for convergence), thinning for MCMC \url{https://arxiv.org/pdf/2005.03952}, actual multi-level approximation - \url{https://arxiv.org/pdf/2402.01320}}
 
 \subsection{Approximate Inference and SVGD}\label{ss: svgd}
 
