@@ -108,11 +108,10 @@
 
 \begin{abstract}
 Stein's method was originally developed to approximate moment computations for special distribution families in statistics using a particular class of linear operators. 
-Various advancements in algorithms leveraging Stein operators have since found application in problems in hypothesis testing, information theory, optimal transport and inference. 
-A prominent example is Stein Variational Gradient Descent (SVGD). SVGD is a non-parametric variational inference method which relies on simple gradient-based updates to deterministically transport a particle ensemble and approximate a posterior distribution of model parameters in the process with sufficient expressivity. 
-However, the scalability of SVGD is hampered by the cost of evaluation of target densities based on computationally expensive high-fidelity forward models, which are ubiquitous in scientific applications. 
-In this work, we introduce a multi-fidelity version of SVGD that brings down the overall cost of particle position updates by leveraging computationally inexpensive lower-fidelity SVGD updates. These may be derived from low-fidelity forward models or cheaper density approximation methods with limited expressivity.
-The key contributions are an unbiased estimator of the SVGD confining force term that partitions the incremental transform based on the correlated score functions at every SVGD step, and an adaptive method for pilot sampling to establish the covariance accurately. These advancements result in improved estimates for Monte-Carlo integrands and posterior summary statistics in Bayesian Inference, and highlight the value of adapting control variate techniques for scaling approximate inference.
+Various advancements leveraging Stein operators have since found application in hypothesis testing, information theory, optimal transport and inference. 
+An example is Stein Variational Gradient Descent (SVGD), a non-parametric variational inference technique which deterministically transports a particle ensemble to cover and approximate complex posterior distributions without restriction to a particular variational family. 
+However, the use of SVGD is hampered by the cost of evaluation of target densities based on computationally expensive high-fidelity forward models, which are ubiquitous in scientific applications.
+In this work, we contribute to the growing body of work on scalable SVGD approximations by making use of multi-fidelity estimation techniques. Specifically, we use an unbiased estimator of the SVGD confining force term that leverages inexpensive score evaluations derived from lower fidelity forward models or density approximations. Through this flexible setup, a greater number of particles can be propagated for the same computational budget. This results in improved estimates for Monte-Carlo integrands and posterior summary statistics in Bayesian Inference, and is a useful addition to techniques that adapt control variates for accelerating Bayesian inference.
 \end{abstract}
 
 \begin{keywords}
@@ -141,7 +140,7 @@ These contributions provide a principled framework for deploying control-variate
 
 \section{Background and Related Work}
 
-
+\aj{add to literature: Support points (VR Joseph) and Stein Points, VP and GB- SVGD (for convergence), thinning for MCMC \url{https://arxiv.org/pdf/2005.03952}, actual multi-level approximation - \url{https://arxiv.org/pdf/2402.01320}}
 
 \subsection{Approximate Inference and SVGD}\label{ss: svgd}
 
@@ -208,7 +207,7 @@ For iteration $l$, we update each of the particles $x_i$ via:
     \text{ where }\hat{\phi}^{\ast}(x) &= \frac{1}{n}\left[\textcolor{orange}{\underbrace{\sum_{j=1}^n k(x_j^l, x) \nabla_{x_j^l}\log p(x_j^l)}_{\text{Confining Force (CF) }, \psi}} + \textcolor{violet}{\underbrace{\sum_{j=1}^{n}\nabla_{x_j^l}k(x_j^l, x)}_{\text{Repulsive Force (RF)},\tau}}\right].
     \label{eq: vanilla_svgd}
 \end{align}
-Here, $\nabla_x \log p(x)$ is the gradient of the log-PDF of the target distribution, also referred to as the score function or simply the score in the literature, a term we adopt for the remainder of this text.
+Here, $\nabla_x \log p(x)$ is the gradient of the log-PDF of the target distribution, also referred to as the score function or simply the score in recent generative modeling literature, a term we adopt for the remainder of this text.
 
 The gradient $\hat{\phi}^{\ast}$ is known as the Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. 
 The first term $\psi$ acts as a confining force (CF) (as coined by \cite{ye_stein_2020}), that drives the particles towards regions towards the high probability regions of the posterior distribution. This primarily depends on the score term which is smoothed by the product with the kernel evaluation. 
@@ -230,7 +229,7 @@ Finally, \cite{shi_finite-particle_2023} provided the first finite-particle conv
 
  
 
-\textcolor{red}{Does use of Adagrad in our implementations affect validity of the multi-fidelity expression?}
+% \textcolor{red}{Does use of Adagrad in our implementations affect validity of the multi-fidelity expression?}
 
 
 % Some remarks about the connection of SVGD to MCMC methods are in order. 
@@ -298,7 +297,7 @@ Linear transformations of the score function have been one of the popular choice
 % \footnote{\textcolor{red}{Technically these are control functionals rather than control variates? \citep{oates_control_2017}}}.
 
 
-In the context of multifidelity methods however, we typically already have access to a hierarchy of models, where each available low-fidelity model can be leveraged as a control variate, but their respective expectations must be computed from samples too. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving reduced-variance estimators in this setting.
+In the context of multi-fidelity methods however, we typically already have access to a hierarchy of models, where each available low-fidelity model can be leveraged as a control variate, but their respective expectations must be computed from samples too. The approximate control variate (ACV) technique \cite{Gorodetsky2020, bomarito_optimization_2022} provides a rigorous formulation for deriving reduced-variance estimators in this setting.
 This method introduces $M$ auxiliary random variables $Q_{m}$ for $m=1,\ldots,M$ that are outputs of the corresponding (e.g., low-fidelity) models $Q_{m} =f_{m}(Z)$, then combines the corresponding MC estimates of each low-fidelity model, $\hat{Q}_{m}$, into a single estimator. The ACV estimator, which we denote $\tilde{Q}$, can be written as:
 \begin{align}
         \Tilde{Q}(z,\alpha,\CA) &:= 
@@ -566,15 +565,12 @@ We use the simplest variation of ACV for our ACV-SVGD based framework that compu
 
 \section{Results}
 
-\subsection{Multivariate Gaussian Model Problem}
+\subsection{Numerical Benchmark - Multivariate Gaussian Distributions}
 To demonstrate the working of the algorithm, we use a simple benchmark problem where the target densities are multivariate Gaussians $\{p_i(x)\}_{i=0}^{M-1}$, with $M=3$, and each $p_i$ parametrized by its respective mean and covariance $(\mu_i, \Sigma_i)$:
 
 The associated cost vector is given by $w=\{10^{-m}\}_{m=0}^{M-1}$.
 
-
-
-
-\subsection{Estimator Performance for Monte-Carlo Integration}
+% \subsection{Estimator Performance for Monte-Carlo Integration}
 
 \subsection{Bayesian Inference}
 Given access to a model ensemble $f_i(x)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $x \in \RR^{n_x}$ is a random vector, the data-generating process and the log-likelihood functions corresponding to these outputs can be expressed as:
@@ -604,8 +600,7 @@ Using the same prior density $p_o(x)$ in each of the inference setups for the in
 
 In this work, we considered the application of multifidelity surrogate and multifidelity estimator techniques to Stein Variational Gradient Descent (SVGD), a popular Bayesian inference method. SVGD and related flow-based methods have numerous applications, including hypothesis testing, development of traditional CVs for MCMC, and  Bayesian inference for neural networks.
 
-We proposed alternate approaches to regular SVGD that take advantage of lower-fidelity forward models to inexpensively propagate a particle ensemble to the target density. The first estimator is based on a simple idea from additive-correction based multi-fidelity surrogates, where a lower-fidelity gradient estimate is corrected through a score ratio computed on a smaller subset of particles. Randomization of this subset at every SVGD iteration eventually drives the particle system to a better approximation of the high-fidelity target density; however the distribution of particles is problem-specific and based on empirical comparisons to the vanilla SVGD update. 
-The second estimator generalizes the first one by drawing on well-established theory from multifidelity Monte Carlo and approximate control variate (ACV)-based estimators - using the cost and correlation estimates between parts of the gradient term, we learn the control variate weights and a sample allocation strategy to distribute particles amongst various fidelities under different computational budget scenarios. 
+The second estimator improves upon the key ideas of the first one by drawing on well-established theory from multifidelity Monte Carlo and approximate control variate (ACV)-based estimators to establish an unbiased estimate of the gradient. We learn the control variate weights and a sample allocation strategy to distribute particles amongst various fidelities at each SVGD update step under different computational budget scenarios. Combined with randomization of the designated high-fidelity subsets, 
 
 We explored the benefits of these estimators for Monte-Carlo integration with different test functions compared to traditional Monte-Carlo methods and computations under vanilla SVGD.
 
