@@ -566,29 +566,60 @@ We use the simplest variation of ACV for our ACV-SVGD based framework that compu
 % \end{figure}
 
 \section{Results}
+\subsection{Practical Implementation Details}
 
-\subsection{Numerical Benchmark - Multivariate Gaussian Distributions}
+
+\subsection{Two-Dimensional Target Densities}
+
+We first demonstrate the superior performance of the algorithm compared to its single-fidelity counterpart as measured with both KSD and the regularized OT distance between samples at final iteration $L$ and high-quality samples generated from the target dataset.
+
+
+
 To demonstrate the working of the algorithm, we use a simple benchmark problem where the target densities are multivariate Gaussians $\{p_i(x)\}_{i=0}^{M-1}$, with $M=3$, and each $p_i$ parametrized by its respective mean and covariance $(\mu_i, \Sigma_i)$:
 
 The associated cost vector is given by $w=\{10^{-m}\}_{m=0}^{M-1}$.
 
 % \subsection{Estimator Performance for Monte-Carlo Integration}
+\subsubsection{Variance Underestimation with Increasing Dimensionality}
 
-\subsection{Bayesian Inference}
-Given access to a model ensemble $f_i(x)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $x \in \RR^{n_x}$ is a random vector, the data-generating process and the log-likelihood functions corresponding to these outputs can be expressed as:
+
+
+
+\subsection{Bayesian Inverse Problems via ACV-SVGD}
+
+
+
+% \subsection{Bayesian Inference}
+% Given access to a model ensemble $f_i(x)$, $i=1, \cdots, M$ where the subscript indexes models from the highest to the lowest fidelity, and $x \in \RR^{n_x}$ is a random vector, the data-generating process and the log-likelihood functions corresponding to these outputs can be expressed as:
+
+
+Next, we apply ACV-SVGD to a Bayesian inverse problem. In scientific applications, these involve the inference of unknown parameters $\mathbf{x} \in \RR^d$ given noisy observations. Let $f_i$, $i=0, \cdots M$ denote an ensemble of forward models mapping from $\mathbf{x}$ to simulation output $G$. The data-generating process can be expressed as:
+
 \begin{align}
- y_i = f_i(x) + \epsilon_i, \qquad L_i = \log p(\mathbf{y}_i | x) = \prod_{k=1}^N \log p(y_k | x)
- \label{eq: lik_fid_dgp}
+     y_i = f_i(x) + \epsilon_i 
+    \label{eq: bip_fm}
 \end{align}
 
-where $\mathbf{y}_i = [y_1, \cdots, y_k, \cdots, y_N]$ are i.i.d. observations and $\epsilon_i$ is zero-mean additive noise.
+Let $\pi_0$ denote the prior distribution on $\mathbf{x}$ and consider zero-mean Gaussian noise with covariance $\Gamma$. Using identical prior specification for each process in Eq.~\eqref{eq: bip_fm}, the posterior distribution is given by Bayes' rule:
 
-Using the same prior density $p_o(x)$ in each of the inference setups for the individual models, the score function for the posterior PDF then simplifies to the following tractable expression that does not require evaluation of the normalizing constant:
+\begin{equation}
+    p(\mathbf{x}) = \frac{1}{Z} \exp \left(-\frac{1}{2}||y - f_i(\mathbf{x})||_{\Gamma^{-1}}^2\right)\pi_0(\mathbf{x})
+    \label{eq: post}
+\end{equation}
 
+where $Z$ is the normalizing constant, typically intractable in most problems of interest. When applying SVGD, this drops out because of the use of the score function:
 \begin{align}
-    \nabla_{x} \log p_i(x \mid D) = \nabla_x (L_i  + \log(p_o(x)),
+    \nabla_{x} \log p(\mathbf{x}) = \nabla_x (L_i  + \log(\pi_0(\mathbf{x})),
     \label{eqn: bayes_rule_score}
 \end{align}
+
+We consider two problems of interest both involving a steady state elliptic PDE:
+\begin{enumerate}
+    \item Steady-state diffusion based on the setup in \cite{alsup_multilevel_2022}, with $d=2$, and each model considering finite-difference discretizations at 1024, 64 and 16 grid points respectively.
+
+    \item A Darcy flow example based on the setup of \cite{takamoto_pdebench_2024}, previously studied in \cite{coons_bayesian_2025} with $d=30$, and the low-fidelity models based on pre-trained neural network architectures.
+\end{enumerate}
+
 % \subsection{Optimal Experimental Design via MF-SVGD Bayesian Inference}
 
 
