@@ -144,7 +144,7 @@ These contributions provide a principled framework for deploying control-variate
 
 \aj{add to literature: Other Bayesian Inference techniques e.g. SGLD (\url{https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf}), MCMC related: Support points (VR Joseph) and Stein Points, VP and GB- SVGD (for convergence), thinning for MCMC \url{https://arxiv.org/pdf/2005.03952}, actual multi-level approximation - \url{https://arxiv.org/pdf/2402.01320}. Other SVGD techniques from Cosmin e.g. condensed SVGD?}. 
 % Also annealed SVGD (KAUST) and MP-SVGD (Zhuo et al. for the variance underestimation etc. arguments) - show performance in slightly higher number of dimensions. 
-Finally, highlight role in diffusion models - Stein Score distillation - \url{https://arxiv.org/abs/2401.00604}. Also CDF estimation (Boris Kramer) - \url{https://arxiv.org/abs/2303.06422}
+Finally, highlight role in diffusion models - Stein Score distillation - \url{https://arxiv.org/abs/2401.00604}. Also CDF estimation (Boris Kramer) - \url{https://arxiv.org/abs/2303.06422}. Non-asymptotic analysis: \citep{Korba2020}
 
 \subsection{Approximate Inference and SVGD}\label{ss: svgd}
 
@@ -162,7 +162,7 @@ The object of interest in Bayesian inference is the ``posterior density'' $p(\th
     \label{eqn: bayes_rule_v1}
 \end{align}
 
-where $p(D)$ is the evidence or marginal likelihood, and often intractable quantity that acts as a normalizing constant on the often tractable likelihood and prior.
+where $p(D)$ is the evidence or marginal likelihood, and often intractable quantity that acts as a normalizing constant on the product of the likelihood and prior.
 
 Markov Chain Monte Carlo (MCMC) methods \citep{brooks_handbook_2011} are considered a workhorse of modern statistical inference. 
 The high-level idea is to generate a sequence of random samples through construction of a Markov chain whose equilibrium distribution is the target posterior distribution. 
@@ -218,7 +218,7 @@ Summing up, vanilla SVGD starts with the initial particle set $\{x_i^0\}_{i=1}^{
     \text{ where }\hat{\phi}^{\ast}(x) &= \frac{1}{n}\left[\textcolor{orange}{\underbrace{\sum_{j=1}^n k(x_j^l, x) \nabla_{x_j^l}\log p(x_j^l)}_{\text{Confining Force (CF) }, \psi}} + \textcolor{violet}{\underbrace{\sum_{j=1}^{n}\nabla_{x_j^l}k(x_j^l, x)}_{\text{Repulsive Force (RF)},\tau}}\right].
     \label{eq: vanilla_svgd}
 \end{align}
-Here, $\nabla_x \log p(x)$ is the gradient of the log probability density of the target distribution. This is also referred to as the \emph{score function} or simply the score in generative modeling literature, a term we adopt for the remainder of this text. The use of the score is particularly beneficial for applications such as Bayesian inference where the difficulty in computation of the normalizing constant can be sidestepped.
+Here, $\nabla_x \log p(x)$ is the gradient of the log probability density of the target distribution. This is also referred to as the \emph{score function} or simply the score. The use of the score is beneficial for multiple applications including Bayesian inference where computation of the typically intractable normalizing constant needs to be sidestepped \citep{JMLR:v6:hyvarinen05a}.
 
 % The gradient $\hat{\phi}^{\ast}$ is known as the Langevin-Stein operator. For a continuously differentiable and smooth target density, the decomposition involves the sum of $L$ operators, each of which acts on a single datapoint. 
 The Langevin-Stein operator can be interpreted as follows: the first term $\psi$ acts as a driving force or a confining force (CF) (as coined by \cite{ye_stein_2020}), that drives the particles towards regions towards the high probability regions of the posterior distribution. This primarily depends on the kernel-weighted score term --- for a single particle, the influence of the remaining particles on the total force diminishes with distance, with its closest neighbours determining the extent to which it is steered towards the high probability regions. 
@@ -361,15 +361,26 @@ In fact, the generalized linear grouped ACV estimator (GACV) \cite{gorodetsky_gr
 
 In this section, we highlight two previous approaches that leverage estimation with multiple models to drive the SVGD updates and achieve significant cost reduction in the process. 
 
-While these are important efforts that provably result in more efficient SVGD-based approximations, we point out key limitations that restrict broader adoption:
+The work of \cite{alsup_multilevel_2022} proposes a hierarchical multi-level surrogate model. Given a sequence of measures $p^{(1)}, \cdots, p^{(L-1)}$ ordered by increasing costs that converge weakly to the target measure $p$ for $l \rightarrow \infty$, they demonstrate that the high computational costs needed to approximate the target directly can be reduced considerably by running SVGD at the highest level $L$ with a good initial distribution $q_0$ that is determined from SVGD iterations on the cheaper, lower levels. 
+They demonstrate their methodology on Bayesian inverse problems, where such a sequence can be constructed from finite-difference or finite-element discretizations of the forward operator in a PDE. The method is easy to implement with multiple vanilla SVGD runs and requires little-to-no hyperparameter tuning. 
+However, like most multi-level analysis, it is somewhat restrictive in its assumptions on the cost and model error relationships, and may not be able to accomodate arbitrary measure sequences derived from various data-driven models that may be available to the practitioner. 
 
-\begin{enumerate}
-    \item The multilevel approach is limited to model ensembles with constraints on the cost-accuracy relationships. For instance, both methods above rely on coarser discretizations of the forward operator. They cannot operate with more general ensembles that commonly arise in scientific development, including reduced-order models and surrogates.
+Moreover, accurate estimation of the SVGD gradient given a finite interacting particle system is not tackled in the above method, which provides computational speedups through the limited number of iterations needed at the highest level rather than through the evaluation of fewer high-fidelity particles. 
+The exact trade-off between these costs remains an open question and could motivate more powerful algorithms that exploit both avenues for cost savings i.e. methods that propagate particles under all fidelities simultaneously while adaptively optimizing the computational workload between different fidelities based on suitable measures of convergence to the target. Our work seeks to explore a simplified version of this.
 
-    \item Effectiveness of not blending? 
-\end{enumerate}
+Finally, the work of \cite{weissmann_mean-field_2024} explores a multi-level method that 
 
-In addition to the direct combination of particle position updates driven by different fidelities, our work also introduces a novel approach to inform covariance estimation on the fly.
+
+This relies on .... On the other hand, our method does not alter the estimators for the posterior moments, but uses multi-fidelity estimation of the SVGD gradient at every step. The empirical measure from the final particle ensemble obtained under this method is then used to compute posterior statistics.
+% While these are important efforts that provably result in more efficient SVGD-based approximations, we point out key limitations that restrict broader adoption:
+
+% \begin{enumerate}
+%     \item The multilevel approach is limited to model ensembles with constraints on the cost-accuracy relationships. For instance, both methods above rely on coarser discretizations of the forward operator. They cannot operate with more general ensembles that commonly arise in scientific development, including reduced-order models and surrogates.
+
+%     \item Effectiveness of not blending? 
+% \end{enumerate}
+
+% In addition to the direct combination of particle position updates driven by different fidelities, our work also introduces a novel approach to inform covariance estimation on the fly.
 
 
 
