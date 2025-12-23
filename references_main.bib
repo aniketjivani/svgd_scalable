@@ -420,7 +420,6 @@ url={https://openreview.net/forum?id=pw2v8HFJIYg}
     doi = {10.1137/23M1584307},
 }
 
-
 @article{JMLR:v6:hyvarinen05a,
   author  = {Aapo Hyv{{\"a}}rinen},
   title   = {Estimation of Non-Normalized Statistical Models by Score Matching},
@@ -444,3 +443,119 @@ url={https://openreview.net/forum?id=pw2v8HFJIYg}
  year = {2020}
 }
 
+@article{Burt2020,
+  author  = {David R. Burt and Carl Edward Rasmussen and Mark van der Wilk},
+  title   = {Convergence of Sparse Variational Inference in Gaussian Processes Regression},
+  journal = {Journal of Machine Learning Research},
+  year    = {2020},
+  volume  = {21},
+  number  = {131},
+  pages   = {1--63},
+  url     = {http://jmlr.org/papers/v21/19-1015.html}
+}
+
+@article{duchi11a,
+  author  = {John Duchi and Elad Hazan and Yoram Singer},
+  title   = {Adaptive Subgradient Methods for Online Learning and Stochastic Optimization},
+  journal = {Journal of Machine Learning Research},
+  year    = {2011},
+  volume  = {12},
+  number  = {61},
+  pages   = {2121--2159},
+  url     = {http://jmlr.org/papers/v12/duchi11a.html}
+}
+
+@inproceedings{peng2020,
+ author = {Chen, Peng and Ghattas, Omar},
+ booktitle = {Advances in Neural Information Processing Systems},
+ editor = {H. Larochelle and M. Ranzato and R. Hadsell and M.F. Balcan and H. Lin},
+ pages = {1947--1958},
+ publisher = {Curran Associates, Inc.},
+ title = {Projected Stein Variational Gradient Descent},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2020/file/14faf969228fc18fcd4fcf59437b0c97-Paper.pdf},
+ volume = {33},
+ year = {2020}
+}
+
+@article{anantha_padmanabha_improving_2024,
+	title = {Improving the performance of {Stein} variational inference through extreme sparsification of physically-constrained neural network models},
+	volume = {432},
+	issn = {00457825},
+	url = {https://linkinghub.elsevier.com/retrieve/pii/S0045782524006145},
+	doi = {10.1016/j.cma.2024.117359},
+	language = {en},
+	urldate = {2025-12-20},
+	journal = {Computer Methods in Applied Mechanics and Engineering},
+	author = {Anantha Padmanabha, Govinda and Fuhg, Jan Niklas and Safta, Cosmin and Jones, Reese E. and Bouklas, Nikolaos},
+	month = dec,
+	year = {2024},
+	pages = {117359},
+}
+
+@article{padmanabha_csvgd_2025,
+	title = {{CONCURRENT}, {CONDENSED} {STEIN} {VARIATIONAL} {GRADIENT} {DESCENT} {FOR} {UNCERTAINTY} {QUANTIFICATION} {OF} {NEURAL} {NETWORKS}},
+	volume = {6},
+	issn = {2689-3967},
+	url = {https://www.dl.begellhouse.com/journals/558048804a15188a,24181d765dd9f652,40afaf9b168a212e.html},
+	doi = {10.1615/JMachLearnModelComput.2025059347},
+	abstract = {We propose a Stein variational gradient descent (SVGD) method to concurrently sparsify, train, and provide uncertainty quantification (UQ) of a complexly parameterized model, such as a neural network (NN). It employs a graph reconciliation and condensation process to reduce complexity and increase similarity in the Stein ensemble of parameterizations. Therefore, the proposed concurrent, condensed SVGD (ccSVGD) method can provide UQ on parameters, not just outputs. Furthermore, the parameter reduction speeds up the convergence of the Stein gradient descent as it reduces the combinatorial complexity by aligning and differentiating the sensitivity to parameters. These properties are demonstrated with an illustrative example and an application to a mechanical response representation problem in solid mechanics.},
+	language = {en},
+	number = {3},
+	urldate = {2025-12-20},
+	journal = {Journal of Machine Learning for Modeling and Computing},
+	author = {Padmanabha, Govinda Anantha and Safta, Cosmin and Bouklas, Nikolaos and Jones, Reese E.},
+	year = {2025},
+	pages = {69--94},
+}
+
+@misc{sukys_optimal_2017,
+	title = {Optimal fidelity multi-level {Monte} {Carlo} for quantification of uncertainty in simulations of cloud cavitation collapse},
+	url = {http://arxiv.org/abs/1705.04374},
+	doi = {10.48550/arXiv.1705.04374},
+	abstract = {We quantify uncertainties in the location and magnitude of extreme pressure spots revealed from large scale multi-phase flow simulations of cloud cavitation collapse. We examine clouds containing 500 cavities and quantify uncertainties related to their initial spatial arrangement. The resulting 2000-dimensional space is sampled using a non-intrusive and computationally efficient Multi-Level Monte Carlo (MLMC) methodology. We introduce novel optimal control variate coefficients to enhance the variance reduction in MLMC. The proposed optimal fidelity MLMC leads to more than two orders of magnitude speedup when compared to standard Monte Carlo methods. We identify large uncertainties in the location and magnitude of the peak pressure pulse and present its statistical correlations and joint probability density functions with the geometrical characteristics of the cloud. Characteristic properties of spatial cloud structure are identified as potential causes of significant uncertainties in exerted collapse pressures.},
+	urldate = {2025-12-22},
+	publisher = {arXiv},
+	author = {Šukys, Jonas and Rasthofer, Ursula and Wermelinger, Fabian and Hadjidoukas, Panagiotis and Koumoutsakos, Petros},
+	month = may,
+	year = {2017},
+	note = {arXiv:1705.04374},
+	keywords = {Computer Science - Computational Engineering, Finance, and Science, Computer Science - Distributed, Parallel, and Cluster Computing, Mathematics - Numerical Analysis, Statistics - Computation},
+}
+
+@misc{neal_mcmc_2012,
+	title = {{MCMC} using {Hamiltonian} dynamics},
+	url = {http://arxiv.org/abs/1206.1901},
+	doi = {10.48550/arXiv.1206.1901},
+	abstract = {Hamiltonian dynamics can be used to produce distant proposals for the Metropolis algorithm, thereby avoiding the slow exploration of the state space that results from the diffusive behaviour of simple random-walk proposals. Though originating in physics, Hamiltonian dynamics can be applied to most problems with continuous state spaces by simply introducing fictitious "momentum" variables. A key to its usefulness is that Hamiltonian dynamics preserves volume, and its trajectories can thus be used to define complex mappings without the need to account for a hard-to-compute Jacobian factor - a property that can be exactly maintained even when the dynamics is approximated by discretizing time. In this review, I discuss theoretical and practical aspects of Hamiltonian Monte Carlo, and present some of its variations, including using windows of states for deciding on acceptance or rejection, computing trajectories using fast approximations, tempering during the course of a trajectory to handle isolated modes, and short-cut methods that prevent useless trajectories from taking much computation time.},
+	urldate = {2025-12-23},
+	publisher = {arXiv},
+	author = {Neal, Radford M.},
+	month = jun,
+	year = {2012},
+	note = {arXiv:1206.1901},
+	keywords = {Statistics - Computation, Physics - Computational Physics},
+}
+
+@article{JMLR:v15:hoffman14a,
+  author  = {Matthew D. Hoffman and Andrew Gelman},
+  title   = {The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo},
+  journal = {Journal of Machine Learning Research},
+  year    = {2014},
+  volume  = {15},
+  number  = {47},
+  pages   = {1593--1623},
+  url     = {http://jmlr.org/papers/v15/hoffman14a.html}
+}
+
+@incollection{stein_bound_1972,
+	title = {A bound for the error in the normal approximation to the distribution of a sum of dependent random variables},
+	volume = {6.2},
+	url = {https://projecteuclid.org/ebooks/berkeley-symposium-on-mathematical-statistics-and-probability/Proceedings-of-the-Sixth-Berkeley-Symposium-on-Mathematical-Statistics-and/chapter/A-bound-for-the-error-in-the-normal-approximation-to/bsmsp/1200514239},
+	urldate = {2025-12-23},
+	booktitle = {Proceedings of the {Sixth} {Berkeley} {Symposium} on {Mathematical} {Statistics} and {Probability}, {Volume} 2: {Probability} {Theory}},
+	publisher = {University of California Press},
+	author = {Stein, Charles},
+	month = jan,
+	year = {1972},
+	pages = {583--603},
+}
