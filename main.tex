@@ -386,7 +386,7 @@ In this section, we highlight two previous approaches that leverage estimation w
 
 The work of \cite{alsup_multilevel_2022} does not combine outputs from lower-fidelity SVGD runs directly but instead proposes a hierarchical multi-level surrogate model. Given a sequence of measures $p^{(1)}, \cdots, p^{(L-1)}$ ordered by increasing costs that converge weakly to the target measure $p$ for $l \rightarrow \infty$, they demonstrate that the high computational costs needed to approximate the target directly can be reduced considerably by warm-starting SVGD at the highest level $L$ with a good initial distribution $q_0$ that is determined from SVGD iterations on the cheaper, lower levels. The gradient norm is used as a stopping criterion at each level. Once the highest level converges to the target, the computational costs arising from all levels are compared to the cost of running vanilla SVGD at the highest level from the outset.
 They demonstrate the speedups from their methodology on Bayesian inverse problems, where such a measure sequence can be constructed from successively finer finite-difference or finite-element discretizations of the forward operator in a partial differential equation (PDE). The method is easy to implement with multiple vanilla SVGD runs and requires little-to-no hyperparameter tuning. 
-However, like most multi-level analyses, it is somewhat restrictive in its assumptions on the cost and model error relationships, and may not be able to accomodate measure sequences derived from arbitrary data-driven models that may be available to the practitioner. There is no explicit comparison between subsets of lower-fidelity levels either, with all available levels being used irrespective of their potential for cost savings. 
+However, like most multi-level analyses, it is somewhat restrictive in its assumptions on the cost and model error relationships, and may not be able to accomodate measure sequences derived from arbitrary data-driven models available to the practitioner. There is no explicit comparison between subsets of lower-fidelity levels either, with all available levels being used irrespective of their potential for cost savings. 
 
 Moreover, it does not address accurate estimation of the SVGD gradient given a finite interacting particle system. The computational speedup is achieved through the limited number of iterations needed at the highest level rather than through the evaluation of fewer high-fidelity particles. 
 Quantifying and exploiting the trade-off between these costs remains an open question. This motivates potential methods that can, for instance, propagate particles under all model fidelities simultaneously while distributing the computational workload optimally for variance reduction. 
@@ -517,24 +517,24 @@ First, by linearity of expectation, we partition the overall gradient in Equatio
 \end{align}
 where
 \begin{align}
-    \hat{\psi}_0(x_i^{(l)}, z^{(i, l)}) = \frac{1}{N}\sum_{j=1}^N k(z_j^{(i, l)}, x_i^{(l)}) \nabla_{z_j^{(i, l)}}\log p_0(z_j^{(i, l)})
+    \hat{\Psi}_0(x_i^{(l)}, z^{(i, l)}) = \frac{1}{N}\sum_{j=1}^N \psi(z_j^{(i, l)}, x)=\frac{1}{N}\sum_{j=1}^N k(z_j^{(i, l)}, x_i^{(l)}) \nabla_{z_j^{(i, l)}}\log p_0(z_j^{(i, l)})
     \label{eq: cf_expression_hifi}
 \end{align}
 and
 \begin{align}
-    \hat{\tau}_0(x_i^{(l)}, z^{(i, l)}) = \frac{1}{N}\sum_{j=1}^N \nabla_{z_j^{(i, l)}} k(z_j^{(i, l)}, x_i^{(l)})
+    \hat{\Gamma}_0(x_i^{(l)}, z^{(i, l)}) = \frac{1}{N}\sum_{j=1}^N \nabla_{z_j^{(i, l)}} k(z_j^{(i, l)}, x_i^{(l)})
     \label{eq: rf_expression_hifi}
 \end{align}
     
 % An update for particle $x_i^{l}$ involves evaluation of the CF and RF terms at $x_i^l$ as well as its neighbours $z_i^l \triangleq \mathbf{x}^{(l)} \setminus x_i^l$. 
 The repulsive force computation, which depends only on the positions of particles at a particular iteration, is not affected by the choice of score model and therefore does not admit a control-variate representation based on the score function. A multi-fidelity SVGD update thus replaces only the confining force by its ACV representation while retaining the single-fidelity estimator for the RF term. Consistent with the notation of Equation~\eqref{eqn:ACV-Formula}, we propose the modified gradient descent step:
 \begin{align}
-    x_i^{l + 1} &\leftarrow x_i^l + \epsilon_l \textcolor{orange}{\tilde{\psi}} + \epsilon_l \hat{\tau_0}
+    x_i^{l + 1} &\leftarrow x_i^l + \epsilon_l \textcolor{orange}{\tilde{\Psi}} + \epsilon_l \hat{\Gamma_0}
     \label{eq: exp_partition_p_cf_acv}
 \end{align}
 where
 \begin{align}
-        \tilde{\psi}(x_i^{(l)}, z^{(i,l)}, \alpha, \CA) = \hat{\psi_0}(x_i^{(l)}, z^{(i, l)}) + \sum_{m=1}^M \alpha_m \left(\hat{\psi}_m(x_i^{(l)}, z_m^{(i, l)\ast}) - \hat{\gamma}_m(x_i^{(l)}, z_m^{(i, l)})\right),
+        \tilde{\Psi}(x_i^{(l)}, z^{(i,l)}, \alpha, \CA) = \hat{\Psi_0}(x_i^{(l)}, z^{(i, l)}) + \sum_{m=1}^M \alpha_m \left(\hat{\Psi}_m(x_i^{(l)}, z_m^{(i, l)\ast}) - \hat{\gamma}_m(x_i^{(l)}, z_m^{(i, l)})\right),
         \label{eq: cf_update_acv_formula}
 \end{align}
 % followed by:
@@ -546,13 +546,11 @@ where
 
 % Other representations may also focus on reducing the computational cost of computing pairwise interactions apart from the score computation. We leave investigation of these choices to future work and discuss the ACV-based formulation in greater detail as a first step towards a flexible multi-fidelity version of SVGD.
 
-Next, we discuss the selection of hyperparameters for Equation~\eqref{eq: cf_update_acv_formula}.
+Next, we discuss the selection of hyperparameters i.e. the control variate weights $\alpha$ and the sample partitioning $\CA$ for Equation~\eqref{eq: cf_update_acv_formula}.
 
 \subsection{Selection of ACV-SVGD Hyperparameters}
 
-For each particle of the ensemble, the optimal values of the ACV hyperparameters $\alpha$ and $\CA$ depend on the computational costs and the model output covariance matrix $C$ for the vector of CF outputs $\psi(x_i^l, z_i^l) = [\psi_0(x_i^l, z_i^l), \cdots, \psi_M (x_i^l, z_i^l]$. Typically, we do not have access to the true output covariance, and instead must estimate it through pilot sampling. 
-
-For ACV-SVGD, we estimate $C$ via an offline pilot sampling step, where an independent set of pilot particles is first propagated to the high-fidelity target density, and the CF is computed for the resulting particle trajectory under lower-fidelity targets.
+For each particle of the ensemble, the optimal values of the ACV hyperparameters $\alpha$ and $\CA$ depend on the computational costs and the model output covariance matrix $C$ for the vector of CF outputs $\psi(x_i^{(l)}, z^{(i, l)}) = [\psi(x_i^l, z_1^{i,l}), \cdots, \psi(x_i^l, z_M^{(i,l)})]$. Typically, we do not have access to the true output covariance, and instead must estimate it through pilot sampling. For ACV-SVGD, we estimate $C$ via an offline pilot sampling step, where an independent set of pilot particles is first propagated to the high-fidelity target density, and the CF is computed for the resulting particle trajectory under lower-fidelity targets.
 
 
 \subsection{Pilot Sampling for Covariance Estimation}
@@ -688,11 +686,7 @@ We use the simplest variation of ACV for our ACV-SVGD based framework that compu
 
 \subsection{Two-Dimensional Target Densities}
 
-We first demonstrate the superior performance of the algorithm compared to its single-fidelity counterpart as measured with both KSD and the regularized OT distance between samples at final iteration $L$ and high-quality samples generated from the target dataset.
-
-
-
-To demonstrate the working of the algorithm, we use a simple benchmark problem where the target densities are multivariate Gaussians $\{p_i(x)\}_{i=0}^{M-1}$, with $M=3$, and each $p_i$ parametrized by its respective mean and covariance $(\mu_i, \Sigma_i)$:
+We first demonstrate the method on two benchmark problems, each with 2 low-fidelity models: multivariate Gaussians $\{p_i(x)\}_{i=0}^{M-1}$, with $M=3$, and each $p_i$ parametrized by its respective mean and covariance $(\mu_i, \Sigma_i)$, and the classical Neal's funnel \citep{neal_slice_2003} in two dimensions. We also extend the Gaussian case to higher dimensions to evaluate the feasibility of ACV-SVGD in those settings.
 
 The associated cost vector is given by $w=\{10^{-m}\}_{m=0}^{M-1}$.
 
@@ -746,13 +740,11 @@ We consider steady-state diffusion based on the setup in \cite{alsup_multilevel_
 
 \section{Conclusions and Extensions}
 
-In this work, we considered the application of multifidelity surrogate and multifidelity estimator techniques to Stein Variational Gradient Descent (SVGD), a popular Bayesian inference method. SVGD and related flow-based methods have numerous applications, including hypothesis testing, development of traditional CVs for MCMC, and  Bayesian inference for neural networks.
+In this work, we considered the application of 
+multifidelity surrogate and 
+multifidelity estimation based on approximate control variates to Stein Variational Gradient Descent (SVGD), a popular Bayesian inference method. This establishes an unbiased estimate of the gradient at each SVGD iteration, formed by propagating subsets of particles under low-fidelity target densities. We learn the control variate weights and a sample allocation strategy to distribute particles amongst various fidelities, which serve as hyperparameters to the ACV estimator. Combined with randomization of the designated high-fidelity subsets at each step, the method can propagate far more particles than its single-fidelity version under identical budgets. It results in very small gains in accuracy when estimating posterior statistics, and is fairly robust over different initialization distributions and replications.
 
-The second estimator improves upon the key ideas of the first one by drawing on well-established theory from multifidelity Monte Carlo and approximate control variate (ACV)-based estimators to establish an unbiased estimate of the gradient. We learn the control variate weights and a sample allocation strategy to distribute particles amongst various fidelities at each SVGD update step under different computational budget scenarios. Combined with randomization of the designated high-fidelity subsets, 
-
-We explored the benefits of these estimators for Monte-Carlo integration with different test functions compared to traditional Monte-Carlo methods and computations under vanilla SVGD.
-
-Several promising directions exist for future work. First, adapting the multi-fidelity procedure for application to Bayesian neural networks would be of great interest, as it can further enhance the accuracy and cost savings from pSVGD \citep{peng2020} and ccSVGD\citep{padmanabha_csvgd_2025} through use of a greater number of particles and potentially surrogate models for the score. Second, the offline pilot sampling procedure can be refined further and incorporated into the ACV-based propagation through online pilot sampling techniques. For instance, the particle ensemble derived from the ACV-estimate at the previous iteration can be exploited to update the confining force covariances. Finally, the current method is also constrained to run at a fixed step size for both the pilot and the ACV SVGD runs. Tuning the step size instead to ensure better correlation, potentially informed by optimal transport couplings between fidelity levels could yield more gains from the multi-fidelity framework in budget-constrained settings. This also opens up the possibility to use learning-rate free procedures such as \cite{sharrock_coin_2023} that speed up convergence to the target.
+Several promising directions exist for future work. First, adapting the multi-fidelity procedure for application to Bayesian neural networks would be of great interest, as it can further enhance the accuracy and cost savings from pSVGD \citep{peng2020} and ccSVGD\citep{padmanabha_csvgd_2025} through use of a greater number of particles and potentially surrogate models for the score. Second, the offline pilot sampling procedure can be refined further and incorporated into the ACV-based propagation through online pilot sampling techniques. For instance, the particle ensemble derived from the ACV-estimate at the previous iteration can be exploited to update the confining force covariances. Finally, the current method chooses to include all particles in the update step instead of leveraging stochastic approximations \citep{das2023}, while also being constrained to run at a fixed step size for the pilot and estimation stages. Tuning the step size instead to ensure better correlation, potentially informed by optimal transport couplings between fidelity levels could yield more gains from the multi-fidelity framework in budget-constrained settings. This also opens up the possibility to use learning-rate free procedures such as \cite{sharrock_coin_2023} that speed up convergence to the target.
 
 
 \appendix
