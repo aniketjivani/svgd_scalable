@@ -407,7 +407,6 @@ On the other hand, our method does not target the estimators of output functiona
 
 
 
-\section{Methodology}
 
 
 
@@ -501,7 +500,7 @@ On the other hand, our method does not target the estimators of output functiona
 
 
 % % To better interpret the efficacy of the bifidelity update, we first visualize the evolution of the contributors to the velocity field i.e. SVGD gradient at different time steps.
-
+\section{Methodology}
 \subsection{A Multi-fidelity Estimator for SVGD}
 
 The multi-fidelity update for SVGD partitions the gradient, which is typically estimated through the standard MC estimator, in the style of ACVs so that particles are apportioned to target densities of different fidelities at every iteration. 
@@ -557,22 +556,26 @@ Typically, we do not have access to the true output covariance. It is commonly e
 \begin{align}
     \hat{\Sigma}(x_i^{(l)}) = \frac{1}{N_{\text{pilot}} - 1}\sum_{j=1}^{N_{\text{pilot}}}(\psi^{(j)} - \bar{\psi})(\psi^{(j)} - \bar{\psi})^{\top},
 \end{align}\label{eq: sample_cov_svgd}
-where $\psi^{(j)}(x_i^{(l)}) = [\psi_0(z_j^{(i, l)}, x_i^{(l)}), \cdots, \psi_M(z_j^{(i, l)}, x_i^{(l)})]$ \textcolor{red}{fill in remaining notation}. Thus, every iteration $l$ requires optimization of hyperparameters for multiple outputs, each a confining force update. 
+where $\psi^{(j)}(x_i^{(l)}) = [\psi_0(z_j^{(i, l)}, x_i^{(l)}), \cdots, \psi_M(z_j^{(i, l)}, x_i^{(l)})]$ \textcolor{red}{fill in remaining notation}. Thus, every iteration $l$ requires optimization of hyperparameters for multiple outputs, each constituting a confining force update. 
 % Approaches such as \cite{dixon_covariance_2024} provide specialized estimators that exploit the correlation between outputs for significant variance reduction. 
-We follow the strategy outlined in \cite{Quaglino2019} that chooses a common sample allocation for all particles per dimension $d$ $\CA^d$ based on the scalarized objective:
+We follow the strategy outlined in \cite{Quaglino2019} that chooses a common sample allocation for all particles per dimension $\CA^d$ based on the scalarized objective:
 \begin{align}
     \min_{\mathcal{A}^d\in\mathbb{A}} &\quad \sum_{j=1}^{N_p}\Var[\tilde{\Psi}_j^{(d)}(Z;\alpha^{\ast},\mathcal{A}^d, x_j^{(l)})] \label{eqn:mxmcpy_scalarized}\\
     \text{subject to} &\quad \mathcal{W}(w,\mathcal{A}^d)\leq B - B_P,\label{eqn:mxmcpy_constraint_scalarized}
 \end{align}
-where $w$ is the normalized cost vector ($w_0=1$) representing update cost of a single particle per iteration under each fidelity. While this is by far the most scalable approach, there is also potential to exploit the correlations between gradient components for even greater variance reduction as done in the multi-output estimator formulation of \citep{dixon_covariance_2024}.
+where $w$ is the normalized cost vector ($w_0=1$) representing update cost of a single particle per iteration under each fidelity. While this is by far the most scalable approach as $(B-B_P)$ grows, there is also potential to exploit the correlations between gradient components for even greater variance reduction as done in the multi-output estimator formulation of \citep{dixon_covariance_2024}.
 
-Once $\CA$ is optimized, the optimal control variate weights can be customized per particle (and potentially per dimension) to form the ACV estimator:
+Once $\CA$ is optimized, the optimal control variate weights can be customized per particle (and potentially per dimension) via:
 \begin{align}\label{eqn:alpha-star-acv_custom}
     \alpha^{d\ast}(\CA, x_i^{(l)})=-\Cov[\Delta_i^{(l)}, \Delta_i^{(l)}]^{-1}\Cov[\Delta_i^{(l)}, \hat{\Psi}_{0}^d(x_i^{(l)})]
 \end{align}
 
 The offline pilot sampling step, beginning with computation of Equation~\eqref{eq: sample_cov_svgd} requires access to a sequence of particle positions $X_p=[\mathbf{x}^{(0)}, \cdots, x^{(L-1)}]$. While these can be initialized arbitrarily, a practical choice for this is to first run SVGD for the high-fidelity target $p_0$ with $N_{\text{pilot}}$ particles per iteration, and store $\psi_0(z_j^{(i, l)}, \cdot)$ for each $x_i^{(l)}$. 
-Next, we compute $\psi_m(z_j^{(i,l)}, \cdot)$ i.e. individual contributions to the confining force under low-fidelity target densities for the same sequence.
+Next, we compute $\psi_m(z_j^{(i,l)}, \cdot)$ i.e. individual contributions to the confining force under low-fidelity target densities for the same sequence, and determine $\CA^d$. Assembling the CV weights through Equation~\eqref{eqn:alpha-star-acv_custom} also requires knowledge of CF covariance for particles in the ACV-SVGD loop. This step is addressed in the following subsection.
+
+
+
+We summarize the pilot sampling procedure in algorithm 
 
 
 
